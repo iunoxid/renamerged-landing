@@ -47,11 +47,11 @@ export default function DownloadModal({ isOpen, onClose }: DownloadModalProps) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="relative bg-slate-900 border border-purple-500/30 rounded-2xl shadow-2xl shadow-purple-500/20 max-w-md w-full overflow-hidden"
+            className="relative bg-slate-900 border border-purple-500/30 rounded-2xl shadow-2xl shadow-purple-500/20 max-w-md w-full overflow-hidden mx-4"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-purple-600/10 to-blue-600/10" />
 
-            <div className="relative p-8">
+            <div className="relative p-4 sm:p-8">
               <button
                 onClick={onClose}
                 className="absolute top-4 right-4 p-2 hover:bg-slate-800 rounded-lg transition-colors"
@@ -65,14 +65,14 @@ export default function DownloadModal({ isOpen, onClose }: DownloadModalProps) {
                 </div>
               </div>
 
-              <h3 className="text-2xl font-bold text-white text-center mb-2">
+              <h3 className="text-xl sm:text-2xl font-bold text-white text-center mb-2">
                 Download Renamerged
               </h3>
-              <p className="text-gray-400 text-center mb-8">
+              <p className="text-sm sm:text-base text-gray-400 text-center mb-6 sm:mb-8">
                 Version {APP_CONFIG.appVersion} untuk Windows 10/11
               </p>
 
-              <div className="space-y-6 mb-8">
+              <div className="space-y-4 sm:space-y-6 mb-6 sm:mb-8">
                 <label className="flex items-start gap-3 p-4 bg-slate-800/50 rounded-xl cursor-pointer hover:bg-slate-800 transition-colors border border-transparent hover:border-purple-500/30">
                   <div className="relative flex items-center justify-center mt-0.5">
                     <input
@@ -85,12 +85,12 @@ export default function DownloadModal({ isOpen, onClose }: DownloadModalProps) {
                       <CheckCircle className="absolute text-white pointer-events-none" size={20} />
                     )}
                   </div>
-                  <span className="text-gray-300 flex-1 select-none">
+                  <span className="text-sm sm:text-base text-gray-300 flex-1 select-none">
                     Saya setuju menggunakan aplikasi ini untuk keperluan pribadi dan tidak akan memperjualbelikannya
                   </span>
                 </label>
 
-                <div className="flex justify-center p-4 bg-slate-800/30 rounded-xl border border-slate-700/50">
+                <div className="flex justify-center p-2 sm:p-4 bg-slate-800/30 rounded-xl border border-slate-700/50 overflow-x-auto">
                   <ReCAPTCHA
                     ref={recaptchaRef}
                     sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}

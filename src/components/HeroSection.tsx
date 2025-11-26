@@ -53,7 +53,7 @@ export default function HeroSection({ onDownloadClick }: HeroSectionProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight"
+            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight"
           >
             <span className="bg-gradient-to-r from-white via-purple-200 to-blue-200 bg-clip-text text-transparent">
               Solusi Auto Rename & Merge Faktur Pajak Coretax
@@ -64,7 +64,7 @@ export default function HeroSection({ onDownloadClick }: HeroSectionProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="text-gray-400 text-lg md:text-xl mb-8 leading-relaxed"
+            className="text-gray-400 text-base sm:text-lg md:text-xl mb-8 leading-relaxed"
           >
             Kelola ribuan PDF faktur pajak tanpa internet. Data 100% aman di komputer Anda. Aplikasi Windows Gratis untuk produktivitas maksimal.
           </motion.p>
@@ -77,10 +77,11 @@ export default function HeroSection({ onDownloadClick }: HeroSectionProps) {
               whileHover={{ scale: 1.05, boxShadow: "0 0 30px rgba(139, 92, 246, 0.6)" }}
               whileTap={{ scale: 0.95 }}
               onClick={onDownloadClick}
-              className="flex items-center gap-3 bg-gradient-to-r from-purple-600 to-blue-600 px-10 py-5 rounded-xl font-bold text-xl text-white hover:from-purple-500 hover:to-blue-500 transition-all shadow-2xl shadow-purple-500/50"
+              className="w-full md:w-auto flex items-center justify-center gap-2 md:gap-3 bg-gradient-to-r from-purple-600 to-blue-600 px-6 md:px-10 py-4 md:py-5 rounded-xl font-bold text-base md:text-xl text-white hover:from-purple-500 hover:to-blue-500 transition-all shadow-2xl shadow-purple-500/50"
             >
-              <Download size={26} />
-              Download Sekarang (Windows .exe)
+              <Download size={20} className="md:w-[26px] md:h-[26px]" />
+              <span className="hidden sm:inline">Download Sekarang (Windows .exe)</span>
+              <span className="sm:hidden">Download Sekarang</span>
             </motion.button>
 
             <motion.p

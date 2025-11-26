@@ -39,17 +39,17 @@ export default function FeaturesSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-16"
+          className="text-center mb-12 sm:mb-16"
         >
-          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white leading-tight">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-white leading-tight">
             Fitur Unggulan
           </h2>
-          <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg text-gray-400 max-w-2xl mx-auto px-4">
             Tools Coretax Indonesia yang dirancang khusus untuk Admin Pajak, Akuntan, dan Staff Finance
           </p>
         </motion.div>
 
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="grid sm:grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
           {features.map((feature, index) => (
             <motion.div
               key={index}
@@ -62,16 +62,16 @@ export default function FeaturesSection() {
             >
               <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 to-blue-600/20 rounded-2xl blur-xl group-hover:blur-2xl transition-all" />
 
-              <div className="relative bg-slate-800/50 backdrop-blur-sm border border-purple-500/20 rounded-2xl p-8 h-full hover:border-purple-500/40 transition-all">
+              <div className="relative bg-slate-800/50 backdrop-blur-sm border border-purple-500/20 rounded-2xl p-6 sm:p-8 h-full hover:border-purple-500/40 transition-all">
                 <div className={`inline-flex p-4 rounded-xl bg-gradient-to-br ${feature.color} mb-6`}>
                   <feature.icon className="text-white" size={28} />
                 </div>
 
-                <h3 className="text-2xl font-bold text-white mb-4">
+                <h3 className="text-xl sm:text-2xl font-bold text-white mb-3 sm:mb-4">
                   {feature.title}
                 </h3>
 
-                <p className="text-gray-400 leading-relaxed">
+                <p className="text-sm sm:text-base text-gray-400 leading-relaxed">
                   {feature.description}
                 </p>
               </div>
