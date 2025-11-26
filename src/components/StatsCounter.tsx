@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Download, Users, FileCheck, Clock } from 'lucide-react';
+import { Download, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface StatItem {
@@ -73,20 +73,6 @@ export default function StatsCounter() {
       suffix: '+',
       color: 'from-blue-500 to-blue-600',
     },
-    {
-      icon: FileCheck,
-      value: Math.floor(animatedDownloads * 1250),
-      label: 'Files Processed',
-      suffix: '+',
-      color: 'from-cyan-500 to-cyan-600',
-    },
-    {
-      icon: Clock,
-      value: Math.floor(animatedDownloads * 4.2),
-      label: 'Hours Saved',
-      suffix: '+',
-      color: 'from-green-500 to-green-600',
-    },
   ];
 
   return (
@@ -94,7 +80,7 @@ export default function StatsCounter() {
       <div className="absolute inset-0 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900" />
 
       <div className="relative z-10 max-w-7xl mx-auto">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+        <div className="grid grid-cols-2 gap-4 sm:gap-6 max-w-2xl mx-auto">
           {stats.map((stat, index) => (
             <motion.div
               key={index}
