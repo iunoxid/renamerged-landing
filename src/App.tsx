@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import Navbar from './components/Navbar';
 import HeroSection from './components/HeroSection';
+import TrustBadges from './components/TrustBadges';
+import StatsCounter from './components/StatsCounter';
 import FeaturesSection from './components/FeaturesSection';
 import HowItWorksSection from './components/HowItWorksSection';
 import SecuritySection from './components/SecuritySection';
@@ -18,6 +20,8 @@ export default function App() {
     <div className="min-h-screen bg-slate-900 text-white">
       <Navbar onDownloadClick={() => setIsDownloadModalOpen(true)} />
       <HeroSection onDownloadClick={() => setIsDownloadModalOpen(true)} />
+      <TrustBadges />
+      <StatsCounter />
       <FeaturesSection />
       <HowItWorksSection />
       <SecuritySection />

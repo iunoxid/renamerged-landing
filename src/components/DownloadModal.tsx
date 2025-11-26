@@ -14,8 +14,23 @@ export default function DownloadModal({ isOpen, onClose }: DownloadModalProps) {
   const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
   const recaptchaRef = useRef<ReCAPTCHA>(null);
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (isAgreed && recaptchaToken) {
+      try {
+        await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/track-download`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+      } catch (error) {
+        console.error('Error tracking download:', error);
+      }
+
       window.open(APP_CONFIG.downloadUrl, '_blank');
       onClose();
       setIsAgreed(false);
