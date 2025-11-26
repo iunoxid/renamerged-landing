@@ -72,7 +72,7 @@ export default function DownloadModal({ isOpen, onClose }: DownloadModalProps) {
                 Version {APP_CONFIG.appVersion} untuk Windows 10/11
               </p>
 
-              <div className="space-y-4 mb-8">
+              <div className="space-y-6 mb-8">
                 <label className="flex items-start gap-3 p-4 bg-slate-800/50 rounded-xl cursor-pointer hover:bg-slate-800 transition-colors border border-transparent hover:border-purple-500/30">
                   <div className="relative flex items-center justify-center mt-0.5">
                     <input
@@ -90,7 +90,7 @@ export default function DownloadModal({ isOpen, onClose }: DownloadModalProps) {
                   </span>
                 </label>
 
-                <div className="flex justify-center">
+                <div className="flex justify-center p-4 bg-slate-800/30 rounded-xl border border-slate-700/50">
                   <ReCAPTCHA
                     ref={recaptchaRef}
                     sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
