@@ -7,6 +7,16 @@ interface HeroSectionProps {
   onDownloadClick: () => void;
 }
 
+const formatDownloads = (count: number): string => {
+  if (count >= 1000000) {
+    return (count / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+  }
+  if (count >= 1000) {
+    return (count / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+  }
+  return count.toString();
+};
+
 export default function HeroSection({ onDownloadClick }: HeroSectionProps) {
   const [totalDownloads, setTotalDownloads] = useState(0);
 
@@ -117,13 +127,11 @@ export default function HeroSection({ onDownloadClick }: HeroSectionProps) {
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.7 }}
-                className="flex items-center gap-2 bg-purple-500/10 border border-purple-500/30 rounded-lg px-3 py-2"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 md:gap-3 bg-gradient-to-r from-slate-700 to-slate-800 px-6 md:px-10 py-4 md:py-5 rounded-xl font-bold text-base md:text-xl text-white border border-slate-600 shadow-lg"
               >
-                <Download className="text-purple-400" size={16} />
-                <span className="text-white font-semibold text-sm">
-                  {totalDownloads.toLocaleString()}
-                </span>
-                <span className="text-gray-400 text-sm">downloads</span>
+                <Download size={20} className="md:w-[26px] md:h-[26px] text-slate-300" />
+                <span className="text-white">{formatDownloads(totalDownloads)}</span>
+                <span className="text-slate-400">downloads</span>
               </motion.div>
             </motion.div>
 
