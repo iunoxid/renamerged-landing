@@ -113,20 +113,18 @@ export default function HeroSection({ onDownloadClick }: HeroSectionProps) {
                 <span className="sm:hidden">Download Sekarang</span>
               </motion.button>
 
-              {totalDownloads > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.7 }}
-                  className="flex items-center gap-2 bg-purple-500/10 border border-purple-500/30 rounded-lg px-3 py-2"
-                >
-                  <Download className="text-purple-400" size={16} />
-                  <span className="text-white font-semibold text-sm">
-                    {totalDownloads.toLocaleString()}
-                  </span>
-                  <span className="text-gray-400 text-sm">downloads</span>
-                </motion.div>
-              )}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.7 }}
+                className="flex items-center gap-2 bg-purple-500/10 border border-purple-500/30 rounded-lg px-3 py-2"
+              >
+                <Download className="text-purple-400" size={16} />
+                <span className="text-white font-semibold text-sm">
+                  {totalDownloads.toLocaleString()}
+                </span>
+                <span className="text-gray-400 text-sm">downloads</span>
+              </motion.div>
             </motion.div>
 
             <motion.p
