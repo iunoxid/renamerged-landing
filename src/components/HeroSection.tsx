@@ -1,43 +1,12 @@
 import { Download, Zap, ShieldCheck, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useEffect, useState } from 'react';
-import { APP_CONFIG, API_BASE_URL } from '../config';
+import { APP_CONFIG } from '../config';
 
 interface HeroSectionProps {
   onDownloadClick: () => void;
 }
 
-const formatDownloads = (count: number): string => {
-  if (count >= 1000000) {
-    return (count / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
-  }
-  if (count >= 1000) {
-    return (count / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
-  }
-  return count.toString();
-};
-
 export default function HeroSection({ onDownloadClick }: HeroSectionProps) {
-  const [totalDownloads, setTotalDownloads] = useState(0);
-
-  useEffect(() => {
-    const fetchDownloads = async () => {
-      try {
-        const response = await fetch(
-          `${API_BASE_URL}/api/download-count`
-        );
-        const data = await response.json();
-        setTotalDownloads(data.count || 0);
-      } catch (error) {
-        console.error('Error fetching downloads:', error);
-        setTotalDownloads(0);
-      }
-    };
-
-    fetchDownloads();
-    const interval = setInterval(fetchDownloads, 30000);
-    return () => clearInterval(interval);
-  }, []);
   return (
     <section className="relative min-h-screen flex items-center justify-center pt-16 px-4 overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-slate-900 to-blue-900/20" />
@@ -124,10 +93,10 @@ export default function HeroSection({ onDownloadClick }: HeroSectionProps) {
                 transition={{ delay: 0.7 }}
                 className="flex flex-col items-center justify-center gap-0.5 bg-slate-800/50 border border-slate-700 px-5 py-3.5 md:py-3 rounded-xl shadow-lg"
               >
-                <span className="text-slate-400 text-[10px] font-medium uppercase tracking-wide">Downloads</span>
+                <span className="text-slate-400 text-[10px] font-medium uppercase tracking-wide">Version</span>
                 <div className="flex items-center gap-2">
-                  <Download size={16} className="text-slate-300" />
-                  <span className="text-white font-bold text-lg">{formatDownloads(totalDownloads)}</span>
+                  <Check size={16} className="text-green-400" />
+                  <span className="text-white font-bold text-lg">{APP_CONFIG.appVersion}</span>
                 </div>
               </motion.div>
             </motion.div>

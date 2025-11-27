@@ -2,7 +2,7 @@ import { X, Download, CheckCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useRef } from 'react';
 import ReCAPTCHA from 'react-google-recaptcha';
-import { APP_CONFIG, API_BASE_URL } from '../config';
+import { APP_CONFIG } from '../config';
 
 interface DownloadModalProps {
   isOpen: boolean;
@@ -14,22 +14,8 @@ export default function DownloadModal({ isOpen, onClose }: DownloadModalProps) {
   const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
   const recaptchaRef = useRef<ReCAPTCHA>(null);
 
-  const handleDownload = async () => {
+  const handleDownload = () => {
     if (isAgreed && recaptchaToken) {
-      try {
-        await fetch(
-          `${API_BASE_URL}/api/track-download`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          }
-        );
-      } catch (error) {
-        console.error('Error tracking download:', error);
-      }
-
       window.open(APP_CONFIG.downloadUrl, '_blank');
       onClose();
       setIsAgreed(false);

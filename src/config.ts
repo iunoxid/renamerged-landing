@@ -4,7 +4,3 @@ export const APP_CONFIG = {
   fileSize: '~30MB',
   virusTotalUrl: 'https://www.virustotal.com/gui/file/659ee926078262e08fedc9c6744ba37ebf03580bf203b332609f094d6fc0d162/detection',
 };
-
-export const API_BASE_URL = import.meta.env.PROD
-  ? 'https://api.renamerged.id'
-  : 'http://localhost:3001';
