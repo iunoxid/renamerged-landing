@@ -50,7 +50,7 @@ export default function ChangelogSection() {
   const hasMoreVersions = changelog.versions.length > INITIAL_VISIBLE_COUNT;
 
   return (
-    <section id="changelog" className="py-20 bg-gradient-to-br from-blue-50 via-white to-gray-50 relative overflow-hidden">
+    <section id="changelog" className="py-20 bg-gradient-to-br from-blue-50 via-white to-gray-50 relative">
       <div className="absolute inset-0 bg-gradient-to-br from-blue-100/20 via-transparent to-purple-100/20 pointer-events-none" />
       <div className="container mx-auto px-4 relative z-10">
         <motion.div
@@ -67,12 +67,12 @@ export default function ChangelogSection() {
           </p>
         </motion.div>
 
-        <div className="max-w-4xl mx-auto">
-          <motion.div
-            layout
-            transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
-            className="space-y-6"
-          >
+        <motion.div
+          className="max-w-4xl mx-auto"
+          layout
+          transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+        >
+          <div className="space-y-6">
           {visibleVersions.map((version, index) => {
             const isExpanded = expandedVersions.has(version.version);
             const hasContent =
@@ -198,7 +198,7 @@ export default function ChangelogSection() {
               </motion.div>
             );
           })}
-          </motion.div>
+          </div>
 
           {hasMoreVersions && (
             <motion.div
@@ -228,7 +228,7 @@ export default function ChangelogSection() {
               </button>
             </motion.div>
           )}
-        </div>
+        </motion.div>
       </div>
     </section>
   );
