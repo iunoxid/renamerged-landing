@@ -68,8 +68,8 @@ export default function ChangelogSection() {
         </motion.div>
 
         <div className="max-w-4xl mx-auto">
-          <div className="space-y-6">
-          <AnimatePresence mode="popLayout">
+          <motion.div layout className="space-y-6">
+          <AnimatePresence initial={false}>
           {visibleVersions.map((version, index) => {
             const isExpanded = expandedVersions.has(version.version);
             const hasContent =
@@ -79,11 +79,12 @@ export default function ChangelogSection() {
 
             return (
               <motion.div
+                layout
                 key={version.version}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
                 className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100"
               >
                 <button
@@ -191,7 +192,7 @@ export default function ChangelogSection() {
             );
           })}
           </AnimatePresence>
-          </div>
+          </motion.div>
 
           {hasMoreVersions && (
             <motion.div
