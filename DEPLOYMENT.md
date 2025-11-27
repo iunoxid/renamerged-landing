@@ -1,249 +1,509 @@
-# Deployment Guide - Ubuntu Server
+# Deployment Guide - Cloudflare Zero Trust
 
-Panduan lengkap untuk deploy website Renamerged di Ubuntu Server.
+Panduan lengkap untuk deploy website Renamerged menggunakan Cloudflare Pages (frontend) dan Cloudflare Tunnel (backend).
+
+## Architecture Overview
+
+- **Frontend**: Cloudflare Pages (Static React App)
+- **Backend**: Express Server + SQLite (via Cloudflare Tunnel)
+- **Download Counter**: Local database dengan backend lokal
 
 ## Prerequisites
 
-- Ubuntu Server 20.04 atau lebih baru
-- Akses SSH ke server
-- Domain yang sudah diarahkan ke IP server (untuk production)
+- Akun Cloudflare
+- Domain yang sudah terhubung ke Cloudflare
+- Server lokal untuk backend (bisa PC/laptop yang always on, VPS, atau Raspberry Pi)
+- Node.js 20.x atau lebih baru di server backend
 
-## 1. Update System & Install Dependencies
+---
+
+## Part 1: Deploy Frontend ke Cloudflare Pages
+
+### 1. Build Production
 
 ```bash
-# Update system packages
-sudo apt update && sudo apt upgrade -y
-
-# Install Node.js 20.x (LTS)
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt install -y nodejs
-
-# Install Nginx
-sudo apt install -y nginx
-
-# Install SSL certificate tool (untuk HTTPS)
-sudo apt install -y certbot python3-certbot-nginx
-
-# Verify installations
-node --version
-npm --version
-nginx -v
+# Di local machine, build project
+npm install
+npm run build
 ```
 
-## 2. Clone & Setup Project
+File production akan ada di folder `dist/`.
+
+### 2. Deploy ke Cloudflare Pages
+
+**Option A: Via Cloudflare Dashboard (Manual)**
+
+1. Login ke [Cloudflare Dashboard](https://dash.cloudflare.com/)
+2. Pilih **Pages** di sidebar
+3. Klik **Create a project**
+4. Pilih **Upload assets**
+5. Upload folder `dist/` atau drag & drop
+6. Beri nama project (contoh: `renamerged`)
+7. Klik **Deploy**
+
+**Option B: Via Git (Recommended)**
+
+1. Push project ke GitHub/GitLab
+2. Di Cloudflare Dashboard, pilih **Pages** → **Create a project**
+3. Pilih **Connect to Git**
+4. Pilih repository kamu
+5. Setup build configuration:
+   - **Build command**: `npm run build`
+   - **Build output directory**: `dist`
+   - **Root directory**: `/`
+   - **Node version**: `20`
+6. Tambahkan environment variables:
+   - `VITE_RECAPTCHA_SITE_KEY`: (your reCAPTCHA site key)
+   - `VITE_API_URL`: `https://api.yourdomain.com` (akan disetup di Part 2)
+7. Klik **Save and Deploy**
+
+### 3. Setup Custom Domain (Optional)
+
+1. Di project Pages kamu, pilih **Custom domains**
+2. Klik **Set up a custom domain**
+3. Masukkan domain/subdomain (contoh: `renamerged.id` atau `www.renamerged.id`)
+4. Cloudflare akan auto-setup DNS records
+5. SSL otomatis aktif
+
+---
+
+## Part 2: Deploy Backend dengan Cloudflare Tunnel
+
+### 1. Setup Server Backend
+
+**Di server lokal/VPS:**
 
 ```bash
-# Clone project (ganti dengan repo kamu)
-cd /var/www
-sudo mkdir renamerged
-sudo chown -R $USER:$USER renamerged
-cd renamerged
-
-# Upload files atau clone dari git
-# Jika pakai git:
-# git clone https://github.com/username/renamerged.git .
-
-# Atau upload manual lewat scp dari local:
-# scp -r /path/to/project/* user@server:/var/www/renamerged/
+# Clone atau upload project
+cd /path/to/project
 
 # Install dependencies
 npm install
 
-# Setup environment variables
-nano .env
+# Test backend server
+npm run dev:server
+# Backend akan jalan di http://localhost:3001
 ```
 
-Edit file `.env`:
-```env
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key
-VITE_RECAPTCHA_SITE_KEY=your-recaptcha-site-key-here
+### 2. Install Cloudflared
+
+**Linux/Mac:**
+```bash
+# Download cloudflared
+curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o cloudflared
+
+# Make it executable
+chmod +x cloudflared
+
+# Move to system path
+sudo mv cloudflared /usr/local/bin/
 ```
+
+**Windows:**
+- Download dari [Cloudflare Releases](https://github.com/cloudflare/cloudflared/releases)
+- Install `.msi` installer
+
+### 3. Login ke Cloudflare
 
 ```bash
-# Build project
+cloudflared tunnel login
+```
+
+Browser akan terbuka, pilih domain yang ingin digunakan.
+
+### 4. Create Tunnel
+
+```bash
+# Create tunnel
+cloudflared tunnel create renamerged-backend
+
+# Output akan seperti ini:
+# Tunnel credentials written to: ~/.cloudflared/<TUNNEL-ID>.json
+# Copy TUNNEL-ID untuk step selanjutnya
+```
+
+### 5. Setup Tunnel Configuration
+
+Buat file config:
+
+```bash
+# Linux/Mac
+nano ~/.cloudflared/config.yml
+
+# Windows
+notepad %USERPROFILE%\.cloudflared\config.yml
+```
+
+Isi dengan:
+
+```yaml
+tunnel: <TUNNEL-ID>
+credentials-file: /home/user/.cloudflared/<TUNNEL-ID>.json
+
+ingress:
+  - hostname: api.yourdomain.com
+    service: http://localhost:3001
+  - service: http_status:404
+```
+
+Ganti:
+- `<TUNNEL-ID>` dengan ID tunnel kamu
+- `/home/user/` dengan path home directory kamu
+- `api.yourdomain.com` dengan subdomain yang kamu inginkan
+
+### 6. Setup DNS Record
+
+```bash
+cloudflared tunnel route dns renamerged-backend api.yourdomain.com
+```
+
+Atau manual via Cloudflare Dashboard:
+1. Buka **DNS** settings di Cloudflare
+2. Tambah CNAME record:
+   - **Name**: `api` (atau subdomain yang kamu mau)
+   - **Target**: `<TUNNEL-ID>.cfargotunnel.com`
+   - **Proxy status**: Proxied (orange cloud)
+
+### 7. Run Tunnel
+
+**Test Run:**
+```bash
+cloudflared tunnel run renamerged-backend
+```
+
+**Production Setup (Linux - systemd service):**
+
+```bash
+# Install as service
+sudo cloudflared service install
+
+# Create service file
+sudo nano /etc/systemd/system/cloudflared.service
+```
+
+Isi:
+```ini
+[Unit]
+Description=Cloudflare Tunnel
+After=network.target
+
+[Service]
+Type=simple
+User=your-username
+ExecStart=/usr/local/bin/cloudflared tunnel --config /home/your-username/.cloudflared/config.yml run renamerged-backend
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Enable dan start service:
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable cloudflared
+sudo systemctl start cloudflared
+
+# Check status
+sudo systemctl status cloudflared
+```
+
+**Production Setup (Windows):**
+
+```bash
+# Install as Windows service
+cloudflared service install
+```
+
+### 8. Setup Backend Auto-Start
+
+Buat PM2 atau systemd service untuk backend Express.
+
+**Option A: Using PM2 (Recommended)**
+
+```bash
+# Install PM2
+npm install -g pm2
+
+# Start backend
+cd /path/to/project
+pm2 start npm --name "renamerged-backend" -- run dev:server
+
+# Save PM2 config
+pm2 save
+
+# Setup PM2 startup
+pm2 startup
+# Follow instruksi yang muncul
+
+# Check status
+pm2 status
+pm2 logs renamerged-backend
+```
+
+**Option B: Using systemd (Linux)**
+
+```bash
+sudo nano /etc/systemd/system/renamerged-backend.service
+```
+
+Isi:
+```ini
+[Unit]
+Description=Renamerged Backend
+After=network.target
+
+[Service]
+Type=simple
+User=your-username
+WorkingDirectory=/path/to/project
+ExecStart=/usr/bin/node /path/to/project/server/index.js
+Restart=on-failure
+RestartSec=5s
+Environment=PORT=3001
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Enable:
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable renamerged-backend
+sudo systemctl start renamerged-backend
+sudo systemctl status renamerged-backend
+```
+
+---
+
+## Part 3: Update Frontend Environment
+
+Update environment variables di Cloudflare Pages:
+
+1. Buka project di Cloudflare Pages Dashboard
+2. Pilih **Settings** → **Environment variables**
+3. Update `VITE_API_URL`:
+   - **Production**: `https://api.yourdomain.com`
+4. Klik **Save**
+5. Redeploy project
+
+---
+
+## Part 4: Testing
+
+### Test Backend API
+
+```bash
+# Test GET endpoint
+curl https://api.yourdomain.com/api/download-count
+
+# Expected response:
+# {"success":true,"count":0}
+
+# Test POST endpoint
+curl -X POST https://api.yourdomain.com/api/track-download
+
+# Expected response:
+# {"success":true,"count":1}
+```
+
+### Test Frontend
+
+1. Buka `https://yourdomain.com` atau URL Cloudflare Pages kamu
+2. Cek download counter di hero section
+3. Klik tombol download dan pastikan modal muncul
+4. Complete verification dan download
+5. Refresh page, counter harus bertambah
+
+---
+
+## Maintenance & Updates
+
+### Update Frontend
+
+```bash
+# Build new version
 npm run build
+
+# Option A: Via Git (auto-deploy)
+git add .
+git commit -m "Update frontend"
+git push
+
+# Option B: Manual upload
+# Upload folder dist/ ke Cloudflare Pages Dashboard
 ```
 
-## 3. Configure Nginx
+### Update Backend
 
 ```bash
-# Create Nginx config
-sudo nano /etc/nginx/sites-available/renamerged
+# Pull atau upload code baru
+cd /path/to/project
+
+# Restart dengan PM2
+pm2 restart renamerged-backend
+
+# Atau restart service
+sudo systemctl restart renamerged-backend
 ```
 
-Paste configuration ini:
-
-```nginx
-server {
-    listen 80;
-    server_name renamerged.id www.renamerged.id;
-
-    root /var/www/renamerged/dist;
-    index index.html;
-
-    # Gzip compression
-    gzip on;
-    gzip_vary on;
-    gzip_min_length 1024;
-    gzip_types text/plain text/css text/xml text/javascript application/x-javascript application/xml+rss application/javascript application/json;
-
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
-
-    # Cache static assets
-    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-    }
-
-    # Security headers
-    add_header X-Frame-Options "SAMEORIGIN" always;
-    add_header X-Content-Type-Options "nosniff" always;
-    add_header X-XSS-Protection "1; mode=block" always;
-}
-```
+### Check Logs
 
 ```bash
-# Enable site
-sudo ln -s /etc/nginx/sites-available/renamerged /etc/nginx/sites-enabled/
+# Cloudflare Tunnel logs
+sudo journalctl -u cloudflared -f
 
-# Test Nginx config
-sudo nginx -t
+# Backend logs (PM2)
+pm2 logs renamerged-backend
 
-# Restart Nginx
-sudo systemctl restart nginx
+# Backend logs (systemd)
+sudo journalctl -u renamerged-backend -f
 ```
 
-## 4. Setup SSL Certificate (HTTPS)
+### Backup Database
 
 ```bash
-# Install SSL certificate untuk domain kamu
-sudo certbot --nginx -d renamerged.id -d www.renamerged.id
+# Backup SQLite database
+cp /path/to/project/server/downloads.db /path/to/backup/downloads-$(date +%Y%m%d).db
 
-# Follow prompts:
-# - Enter email
-# - Agree to terms
-# - Choose redirect HTTP to HTTPS (option 2)
+# Automated backup (crontab)
+crontab -e
 
-# Auto-renewal sudah disetup otomatis oleh certbot
-# Test renewal:
-sudo certbot renew --dry-run
+# Add this line untuk backup harian jam 2 pagi:
+0 2 * * * cp /path/to/project/server/downloads.db /path/to/backup/downloads-$(date +\%Y\%m\%d).db
 ```
 
-## 5. Setup Firewall
+---
+
+## Troubleshooting
+
+### Tunnel tidak connect
 
 ```bash
+# Check tunnel status
+cloudflared tunnel info renamerged-backend
+
+# Check logs
+sudo journalctl -u cloudflared -n 50
+
+# Restart tunnel
+sudo systemctl restart cloudflared
+```
+
+### Backend tidak bisa diakses
+
+```bash
+# Check backend status
+pm2 status
+# atau
+sudo systemctl status renamerged-backend
+
+# Check if port 3001 is listening
+netstat -tuln | grep 3001
+
+# Restart backend
+pm2 restart renamerged-backend
+# atau
+sudo systemctl restart renamerged-backend
+```
+
+### CORS errors
+
+Pastikan backend sudah enable CORS untuk domain frontend kamu. Cek di `server/index.js`:
+
+```javascript
+app.use(cors());
+```
+
+### Download counter tidak update
+
+1. Check backend logs
+2. Test API endpoint langsung dengan curl
+3. Check browser console untuk error
+4. Verify `VITE_API_URL` di Cloudflare Pages environment variables
+
+---
+
+## Security Best Practices
+
+- ✅ HTTPS otomatis via Cloudflare
+- ✅ Backend tidak expose langsung ke internet (via tunnel)
+- ✅ Firewall di server backend (hanya allow localhost:3001)
+- ✅ Regular updates system & dependencies
+- ✅ Database backup regular
+- ✅ Monitor logs untuk suspicious activity
+
+### Setup Firewall (Linux Backend)
+
+```bash
+# Allow SSH
+sudo ufw allow ssh
+
+# Deny all incoming except localhost
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+
 # Enable firewall
-sudo ufw allow 'Nginx Full'
-sudo ufw allow OpenSSH
 sudo ufw enable
 
 # Check status
 sudo ufw status
 ```
 
-## 6. Update Website (Deploy Updates)
+---
 
-Setiap kali ada update code:
+## Cost Estimate
 
-```bash
-cd /var/www/renamerged
+- **Cloudflare Pages**: Free (100k requests/month)
+- **Cloudflare Tunnel**: Free
+- **Domain**: ~$10-15/year
+- **Backend Server**:
+  - PC/Laptop lokal: Free (electricity cost)
+  - VPS murah: ~$3-5/month (Contabo, Hetzner, dll)
+  - Raspberry Pi: ~$50 one-time
 
-# Pull latest changes (jika pakai git)
-git pull
+**Total**: Bisa gratis atau minimal $3-5/month
 
-# Atau upload files baru via scp
+---
 
-# Install new dependencies (jika ada)
-npm install
+## Alternative: Backend di VPS Tanpa Tunnel
 
-# Rebuild
-npm run build
+Jika backend ada di VPS dengan IP public, bisa skip Cloudflare Tunnel:
 
-# Restart Nginx (optional, biasanya tidak perlu)
-sudo systemctl restart nginx
+1. Install Nginx di VPS sebagai reverse proxy
+2. Setup SSL dengan Certbot
+3. Point subdomain `api.yourdomain.com` ke IP VPS
+4. Update `VITE_API_URL` ke `https://api.yourdomain.com`
+
+Config Nginx:
+```nginx
+server {
+    listen 80;
+    server_name api.yourdomain.com;
+
+    location / {
+        proxy_pass http://localhost:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Forwarded-For $remote_addr;
+    }
+}
 ```
 
-## 7. Monitoring & Maintenance
-
+Kemudian setup SSL:
 ```bash
-# Check Nginx status
-sudo systemctl status nginx
-
-# Check Nginx logs
-sudo tail -f /var/log/nginx/access.log
-sudo tail -f /var/log/nginx/error.log
-
-# Check SSL certificate expiry
-sudo certbot certificates
-
-# Restart Nginx jika perlu
-sudo systemctl restart nginx
+sudo certbot --nginx -d api.yourdomain.com
 ```
 
-## Troubleshooting
-
-### Website tidak bisa diakses
-```bash
-# Check Nginx status
-sudo systemctl status nginx
-
-# Check Nginx error logs
-sudo tail -100 /var/log/nginx/error.log
-
-# Restart Nginx
-sudo systemctl restart nginx
-```
-
-### SSL Certificate Error
-```bash
-# Renew certificate manually
-sudo certbot renew --force-renewal
-
-# Restart Nginx
-sudo systemctl restart nginx
-```
-
-### Permission Issues
-```bash
-# Fix file permissions
-sudo chown -R www-data:www-data /var/www/renamerged/dist
-sudo chmod -R 755 /var/www/renamerged/dist
-```
-
-## Performance Tips
-
-1. **Enable Nginx Caching**
-2. **Use CDN** untuk static assets
-3. **Monitor dengan** `htop` dan `netstat`
-4. **Setup log rotation** untuk Nginx logs
-5. **Regular updates**: `sudo apt update && sudo apt upgrade`
-
-## Security Checklist
-
-- ✅ SSL/HTTPS enabled
-- ✅ Firewall configured
-- ✅ Regular system updates
-- ✅ Nginx security headers
-- ✅ File permissions properly set
-- ✅ SSH key authentication (disable password login)
-- ✅ Regular backups
-
-## Backup Strategy
-
-```bash
-# Backup project
-tar -czf renamerged-backup-$(date +%Y%m%d).tar.gz /var/www/renamerged
-
-# Backup database (jika ada)
-# Supabase sudah auto-backup, tapi bisa export manual juga
-```
+---
 
 ## Notes
 
-- Build size: ~30MB
-- Node.js version: 20.x LTS recommended
-- Nginx version: 1.18+ recommended
-- Ubuntu version: 20.04+ recommended
+- Database SQLite ada di `server/downloads.db`
+- Frontend fully static, deploy ke CDN global Cloudflare
+- Backend bisa jalan di komputer rumah dengan internet biasa
+- Cloudflare Tunnel handle SSL & DDoS protection otomatis
+- Zero downtime deployment untuk frontend (via Git auto-deploy)
