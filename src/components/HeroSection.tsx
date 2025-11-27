@@ -74,7 +74,6 @@ export default function HeroSection({ onDownloadClick }: HeroSectionProps) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
-              className="flex flex-col sm:flex-row items-start sm:items-center gap-3"
             >
               <motion.button
                 whileHover={{ scale: 1.05, boxShadow: "0 0 30px rgba(139, 92, 246, 0.6)" }}
@@ -86,19 +85,6 @@ export default function HeroSection({ onDownloadClick }: HeroSectionProps) {
                 <span className="hidden sm:inline">Download Sekarang (Windows .exe)</span>
                 <span className="sm:hidden">Download Sekarang</span>
               </motion.button>
-
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.7 }}
-                className="flex flex-col items-center justify-center gap-0.5 bg-slate-800/50 border border-slate-700 px-5 py-3.5 md:py-3 rounded-xl shadow-lg"
-              >
-                <span className="text-slate-400 text-[10px] font-medium uppercase tracking-wide">Version</span>
-                <div className="flex items-center gap-2">
-                  <Check size={16} className="text-green-400" />
-                  <span className="text-white font-bold text-lg">{APP_CONFIG.appVersion}</span>
-                </div>
-              </motion.div>
             </motion.div>
 
             <motion.p
