@@ -1,131 +1,88 @@
-# Deployment Guide - Cloudflare Zero Trust
+# Deployment Guide - Renamerged.id
 
-Panduan lengkap untuk deploy website Renamerged menggunakan Cloudflare Pages (frontend) dan Cloudflare Tunnel (backend).
+## PM2 + Cloudflare Zero Trust Setup
 
-## Architecture Overview
-
-- **Frontend**: Cloudflare Pages (Static React App)
-- **Backend**: Express Server + SQLite (via Cloudflare Tunnel)
-- **Download Counter**: Local database dengan backend lokal
-
-## Prerequisites
-
-- Akun Cloudflare
-- Domain yang sudah terhubung ke Cloudflare
-- Server lokal untuk backend (bisa PC/laptop yang always on, VPS, atau Raspberry Pi)
-- Node.js 20.x atau lebih baru di server backend
+### Prerequisites
+```bash
+npm install -g pm2
+```
 
 ---
 
-## Part 1: Deploy Frontend ke Cloudflare Pages
+## Part 1: PM2 Setup (Port 3001)
 
-### 1. Build Production
-
+### 1. Build the project
 ```bash
-# Di local machine, build project
 npm install
 npm run build
 ```
 
-File production akan ada di folder `dist/`.
+### 2. Start with PM2
+```bash
+pm2 start ecosystem.config.cjs
+```
 
-### 2. Deploy ke Cloudflare Pages
+### 3. Useful PM2 Commands
+```bash
+pm2 status                # Check status
+pm2 logs renamerged       # View logs
+pm2 restart renamerged    # Restart app
+pm2 stop renamerged       # Stop app
+pm2 delete renamerged     # Remove from PM2
+pm2 monit                 # Real-time monitoring
+```
 
-**Option A: Via Cloudflare Dashboard (Manual)**
+### 4. Auto-start on server reboot
+```bash
+pm2 startup
+pm2 save
+```
 
-1. Login ke [Cloudflare Dashboard](https://dash.cloudflare.com/)
-2. Pilih **Pages** di sidebar
-3. Klik **Create a project**
-4. Pilih **Upload assets**
-5. Upload folder `dist/` atau drag & drop
-6. Beri nama project (contoh: `renamerged`)
-7. Klik **Deploy**
-
-**Option B: Via Git (Recommended)**
-
-1. Push project ke GitHub/GitLab
-2. Di Cloudflare Dashboard, pilih **Pages** → **Create a project**
-3. Pilih **Connect to Git**
-4. Pilih repository kamu
-5. Setup build configuration:
-   - **Build command**: `npm run build`
-   - **Build output directory**: `dist`
-   - **Root directory**: `/`
-   - **Node version**: `20`
-6. Tambahkan environment variables:
-   - `VITE_RECAPTCHA_SITE_KEY`: (your reCAPTCHA site key)
-   - `VITE_API_URL`: `https://api.yourdomain.com` (akan disetup di Part 2)
-7. Klik **Save and Deploy**
-
-### 3. Setup Custom Domain (Optional)
-
-1. Di project Pages kamu, pilih **Custom domains**
-2. Klik **Set up a custom domain**
-3. Masukkan domain/subdomain (contoh: `renamerged.id` atau `www.renamerged.id`)
-4. Cloudflare akan auto-setup DNS records
-5. SSL otomatis aktif
+Application will run on **port 3001** at `http://localhost:3001`
 
 ---
 
-## Part 2: Deploy Backend dengan Cloudflare Tunnel
+## Part 2: Cloudflare Zero Trust Configuration
 
-### 1. Setup Server Backend
+### 1. Install Cloudflared
 
-**Di server lokal/VPS:**
-
+**Linux:**
 ```bash
-# Clone atau upload project
-cd /path/to/project
-
-# Install dependencies
-npm install
-
-# Test backend server
-npm run dev:server
-# Backend akan jalan di http://localhost:3001
+wget https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+sudo dpkg -i cloudflared-linux-amd64.deb
 ```
 
-### 2. Install Cloudflared
-
-**Linux/Mac:**
+**Alternative (manual):**
 ```bash
-# Download cloudflared
 curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o cloudflared
-
-# Make it executable
 chmod +x cloudflared
-
-# Move to system path
 sudo mv cloudflared /usr/local/bin/
 ```
 
 **Windows:**
-- Download dari [Cloudflare Releases](https://github.com/cloudflare/cloudflared/releases)
+- Download from [Cloudflare Releases](https://github.com/cloudflare/cloudflared/releases)
 - Install `.msi` installer
 
-### 3. Login ke Cloudflare
-
+### 2. Authenticate with Cloudflare
 ```bash
 cloudflared tunnel login
 ```
+Browser will open, select your domain.
 
-Browser akan terbuka, pilih domain yang ingin digunakan.
-
-### 4. Create Tunnel
-
+### 3. Create Tunnel
 ```bash
-# Create tunnel
-cloudflared tunnel create renamerged-backend
-
-# Output akan seperti ini:
-# Tunnel credentials written to: ~/.cloudflared/<TUNNEL-ID>.json
-# Copy TUNNEL-ID untuk step selanjutnya
+cloudflared tunnel create renamerged-tunnel
 ```
 
-### 5. Setup Tunnel Configuration
+Output will show:
+```
+Tunnel credentials written to: ~/.cloudflared/<TUNNEL_ID>.json
+```
+Copy the `TUNNEL_ID` for next steps.
 
-Buat file config:
+### 4. Configure Tunnel
 
+Create config file:
 ```bash
 # Linux/Mac
 nano ~/.cloudflared/config.yml
@@ -134,54 +91,62 @@ nano ~/.cloudflared/config.yml
 notepad %USERPROFILE%\.cloudflared\config.yml
 ```
 
-Isi dengan:
-
+Add this configuration:
 ```yaml
-tunnel: <TUNNEL-ID>
-credentials-file: /home/user/.cloudflared/<TUNNEL-ID>.json
+tunnel: <TUNNEL_ID>
+credentials-file: /root/.cloudflared/<TUNNEL_ID>.json
 
 ingress:
-  - hostname: api.yourdomain.com
+  - hostname: renamerged.id
+    service: http://localhost:3001
+  - hostname: www.renamerged.id
     service: http://localhost:3001
   - service: http_status:404
 ```
 
-Ganti:
-- `<TUNNEL-ID>` dengan ID tunnel kamu
-- `/home/user/` dengan path home directory kamu
-- `api.yourdomain.com` dengan subdomain yang kamu inginkan
+Replace:
+- `<TUNNEL_ID>` with your actual tunnel ID
+- `/root/` with your home directory path if different
 
-### 6. Setup DNS Record
+### 5. Route DNS to Tunnel
 
+**Option A: Command Line**
 ```bash
-cloudflared tunnel route dns renamerged-backend api.yourdomain.com
+cloudflared tunnel route dns renamerged-tunnel renamerged.id
+cloudflared tunnel route dns renamerged-tunnel www.renamerged.id
 ```
 
-Atau manual via Cloudflare Dashboard:
-1. Buka **DNS** settings di Cloudflare
-2. Tambah CNAME record:
-   - **Name**: `api` (atau subdomain yang kamu mau)
-   - **Target**: `<TUNNEL-ID>.cfargotunnel.com`
-   - **Proxy status**: Proxied (orange cloud)
+**Option B: Cloudflare Dashboard**
+1. Go to **DNS** settings in Cloudflare Dashboard
+2. Add CNAME records:
+   - **Name:** `@` (for root domain)
+   - **Target:** `<TUNNEL_ID>.cfargotunnel.com`
+   - **Proxy status:** Proxied (orange cloud)
 
-### 7. Run Tunnel
+   - **Name:** `www`
+   - **Target:** `<TUNNEL_ID>.cfargotunnel.com`
+   - **Proxy status:** Proxied (orange cloud)
+
+### 6. Run Tunnel
 
 **Test Run:**
 ```bash
-cloudflared tunnel run renamerged-backend
+cloudflared tunnel run renamerged-tunnel
 ```
 
-**Production Setup (Linux - systemd service):**
+**Production Setup (Linux systemd service):**
 
+Install as service:
 ```bash
-# Install as service
 sudo cloudflared service install
+```
 
-# Create service file
+Create service file:
+```bash
 sudo nano /etc/systemd/system/cloudflared.service
 ```
 
-Isi:
+Add this content:
 ```ini
 [Unit]
 Description=Cloudflare Tunnel
@@ -189,8 +154,8 @@ After=network.target
 
 [Service]
 Type=simple
-User=your-username
-ExecStart=/usr/local/bin/cloudflared tunnel --config /home/your-username/.cloudflared/config.yml run renamerged-backend
+User=root
+ExecStart=/usr/local/bin/cloudflared tunnel --config /root/.cloudflared/config.yml run renamerged-tunnel
 Restart=on-failure
 RestartSec=5s
 
@@ -198,312 +163,335 @@ RestartSec=5s
 WantedBy=multi-user.target
 ```
 
-Enable dan start service:
+Enable and start:
 ```bash
 sudo systemctl daemon-reload
 sudo systemctl enable cloudflared
 sudo systemctl start cloudflared
-
-# Check status
 sudo systemctl status cloudflared
 ```
 
 **Production Setup (Windows):**
-
 ```bash
-# Install as Windows service
 cloudflared service install
 ```
 
-### 8. Setup Backend Auto-Start
+---
 
-Buat PM2 atau systemd service untuk backend Express.
+## Part 3: Cloudflare SSL/TLS Settings
 
-**Option A: Using PM2 (Recommended)**
+1. Go to **SSL/TLS** > **Overview** in Cloudflare Dashboard
+2. Set encryption mode: **Full** or **Full (strict)**
+3. Enable **Always Use HTTPS**
+4. Enable **Automatic HTTPS Rewrites**
 
+---
+
+## Part 4: Cloudflare Zero Trust Application (Optional - For Access Control)
+
+### 1. Create Application
+
+1. Go to **Cloudflare Zero Trust Dashboard**
+2. Navigate to **Access** > **Applications**
+3. Click **Add an application** > **Self-hosted**
+
+### 2. Application Configuration
+
+**Application Settings:**
+- **Application name:** Renamerged
+- **Session Duration:** 24 hours
+- **Application domain:** `renamerged.id`
+
+**Application Details:**
+- **Subdomain:** `@` (for root domain)
+- **Domain:** `renamerged.id`
+- **Path:** Leave empty
+
+### 3. Create Access Policy
+
+**For Public Access:**
+- **Policy name:** Allow Everyone
+- **Action:** Allow
+- **Rule type:** Include
+- **Selector:** Everyone
+
+**For Restricted Access (Optional):**
+- **Action:** Allow
+- **Rule type:** Include
+- **Selector:** Emails ending in `@yourdomain.com`
+
+---
+
+## Verification
+
+### Check PM2 Status
 ```bash
-# Install PM2
-npm install -g pm2
-
-# Start backend
-cd /path/to/project
-pm2 start npm --name "renamerged-backend" -- run dev:server
-
-# Save PM2 config
-pm2 save
-
-# Setup PM2 startup
-pm2 startup
-# Follow instruksi yang muncul
-
-# Check status
 pm2 status
-pm2 logs renamerged-backend
+pm2 logs renamerged
 ```
 
-**Option B: Using systemd (Linux)**
-
+### Check Tunnel Status
 ```bash
-sudo nano /etc/systemd/system/renamerged-backend.service
+cloudflared tunnel info renamerged-tunnel
+sudo systemctl status cloudflared
 ```
 
-Isi:
-```ini
-[Unit]
-Description=Renamerged Backend
-After=network.target
-
-[Service]
-Type=simple
-User=your-username
-WorkingDirectory=/path/to/project
-ExecStart=/usr/bin/node /path/to/project/server/index.js
-Restart=on-failure
-RestartSec=5s
-Environment=PORT=3001
-
-[Install]
-WantedBy=multi-user.target
-```
-
-Enable:
+### Check if Port is Listening
 ```bash
-sudo systemctl daemon-reload
-sudo systemctl enable renamerged-backend
-sudo systemctl start renamerged-backend
-sudo systemctl status renamerged-backend
+netstat -tulpn | grep 3001
+# or
+lsof -i :3001
 ```
 
----
-
-## Part 3: Update Frontend Environment
-
-Update environment variables di Cloudflare Pages:
-
-1. Buka project di Cloudflare Pages Dashboard
-2. Pilih **Settings** → **Environment variables**
-3. Update `VITE_API_URL`:
-   - **Production**: `https://api.yourdomain.com`
-4. Klik **Save**
-5. Redeploy project
-
----
-
-## Part 4: Testing
-
-### Test Backend API
-
-```bash
-# Test GET endpoint
-curl https://api.yourdomain.com/api/download-count
-
-# Expected response:
-# {"success":true,"count":0}
-
-# Test POST endpoint
-curl -X POST https://api.yourdomain.com/api/track-download
-
-# Expected response:
-# {"success":true,"count":1}
-```
-
-### Test Frontend
-
-1. Buka `https://yourdomain.com` atau URL Cloudflare Pages kamu
-2. Cek download counter di hero section
-3. Klik tombol download dan pastikan modal muncul
-4. Complete verification dan download
-5. Refresh page, counter harus bertambah
-
----
-
-## Maintenance & Updates
-
-### Update Frontend
-
-```bash
-# Build new version
-npm run build
-
-# Option A: Via Git (auto-deploy)
-git add .
-git commit -m "Update frontend"
-git push
-
-# Option B: Manual upload
-# Upload folder dist/ ke Cloudflare Pages Dashboard
-```
-
-### Update Backend
-
-```bash
-# Pull atau upload code baru
-cd /path/to/project
-
-# Restart dengan PM2
-pm2 restart renamerged-backend
-
-# Atau restart service
-sudo systemctl restart renamerged-backend
-```
-
-### Check Logs
-
-```bash
-# Cloudflare Tunnel logs
-sudo journalctl -u cloudflared -f
-
-# Backend logs (PM2)
-pm2 logs renamerged-backend
-
-# Backend logs (systemd)
-sudo journalctl -u renamerged-backend -f
-```
-
-### Backup Database
-
-```bash
-# Backup SQLite database
-cp /path/to/project/server/downloads.db /path/to/backup/downloads-$(date +%Y%m%d).db
-
-# Automated backup (crontab)
-crontab -e
-
-# Add this line untuk backup harian jam 2 pagi:
-0 2 * * * cp /path/to/project/server/downloads.db /path/to/backup/downloads-$(date +\%Y\%m\%d).db
-```
+### Test Website
+Visit: `https://renamerged.id`
 
 ---
 
 ## Troubleshooting
 
-### Tunnel tidak connect
+### PM2 Issues
 
+**App not starting:**
 ```bash
-# Check tunnel status
-cloudflared tunnel info renamerged-backend
+pm2 delete renamerged
+pm2 start ecosystem.config.cjs
+pm2 logs renamerged --lines 100
+```
 
-# Check logs
-sudo journalctl -u cloudflared -n 50
+**High memory usage:**
+```bash
+pm2 restart renamerged
+```
+
+### Tunnel Issues
+
+**Connection problems:**
+```bash
+# Check tunnel info
+cloudflared tunnel info renamerged-tunnel
+
+# Check tunnel logs
+sudo journalctl -u cloudflared -f
 
 # Restart tunnel
 sudo systemctl restart cloudflared
 ```
 
-### Backend tidak bisa diakses
+**DNS not resolving:**
+- Check CNAME records in Cloudflare DNS
+- Verify tunnel ID in DNS target
+- Wait 5-10 minutes for DNS propagation
 
+### 502 Bad Gateway
+
+This means tunnel is working but PM2 app is not responding:
+
+1. **Check PM2 status:**
 ```bash
-# Check backend status
 pm2 status
-# atau
-sudo systemctl status renamerged-backend
-
-# Check if port 3001 is listening
-netstat -tuln | grep 3001
-
-# Restart backend
-pm2 restart renamerged-backend
-# atau
-sudo systemctl restart renamerged-backend
+pm2 logs renamerged
 ```
 
-### CORS errors
-
-Pastikan backend sudah enable CORS untuk domain frontend kamu. Cek di `server/index.js`:
-
-```javascript
-app.use(cors());
+2. **Check if app is listening:**
+```bash
+netstat -tulpn | grep 3001
 ```
 
-### Download counter tidak update
+3. **Restart both services:**
+```bash
+pm2 restart renamerged
+sudo systemctl restart cloudflared
+```
 
-1. Check backend logs
-2. Test API endpoint langsung dengan curl
-3. Check browser console untuk error
-4. Verify `VITE_API_URL` di Cloudflare Pages environment variables
+4. **Verify tunnel config:**
+- Ensure tunnel config points to `localhost:3001`
+- Ensure PM2 app is running on port 3001
+
+### 503 Service Unavailable
+
+Tunnel is not running:
+```bash
+sudo systemctl start cloudflared
+cloudflared tunnel info renamerged-tunnel
+```
+
+---
+
+## Monitoring & Logs
+
+### PM2 Monitoring
+```bash
+pm2 monit                          # Real-time dashboard
+pm2 logs renamerged                # Live logs
+pm2 logs renamerged --lines 100    # Last 100 lines
+pm2 logs renamerged --err          # Error logs only
+```
+
+### Tunnel Logs
+```bash
+# Systemd logs
+sudo journalctl -u cloudflared -f
+
+# Last 50 lines
+sudo journalctl -u cloudflared -n 50
+```
+
+### Cloudflare Analytics
+- Go to **Analytics & Logs** in Cloudflare Dashboard
+- Monitor traffic, threats, and performance
+- Check **Zero Trust** > **Analytics** for tunnel metrics
 
 ---
 
 ## Security Best Practices
 
-- ✅ HTTPS otomatis via Cloudflare
-- ✅ Backend tidak expose langsung ke internet (via tunnel)
-- ✅ Firewall di server backend (hanya allow localhost:3001)
-- ✅ Regular updates system & dependencies
-- ✅ Database backup regular
-- ✅ Monitor logs untuk suspicious activity
+1. **Never expose port 3001 to internet**
+   - Only accessible via localhost
+   - All traffic goes through Cloudflare Tunnel
 
-### Setup Firewall (Linux Backend)
-
+2. **Firewall Configuration (Linux):**
 ```bash
-# Allow SSH
+# Allow SSH only
 sudo ufw allow ssh
 
-# Deny all incoming except localhost
+# Deny all incoming
 sudo ufw default deny incoming
 sudo ufw default allow outgoing
 
 # Enable firewall
 sudo ufw enable
-
-# Check status
 sudo ufw status
 ```
 
----
+3. **Keep files secure:**
+   - Never commit `.env` to git
+   - Protect `~/.cloudflared/` directory
+   - Regular backups of tunnel credentials
 
-## Cost Estimate
-
-- **Cloudflare Pages**: Free (100k requests/month)
-- **Cloudflare Tunnel**: Free
-- **Domain**: ~$10-15/year
-- **Backend Server**:
-  - PC/Laptop lokal: Free (electricity cost)
-  - VPS murah: ~$3-5/month (Contabo, Hetzner, dll)
-  - Raspberry Pi: ~$50 one-time
-
-**Total**: Bisa gratis atau minimal $3-5/month
-
----
-
-## Alternative: Backend di VPS Tanpa Tunnel
-
-Jika backend ada di VPS dengan IP public, bisa skip Cloudflare Tunnel:
-
-1. Install Nginx di VPS sebagai reverse proxy
-2. Setup SSL dengan Certbot
-3. Point subdomain `api.yourdomain.com` ke IP VPS
-4. Update `VITE_API_URL` ke `https://api.yourdomain.com`
-
-Config Nginx:
-```nginx
-server {
-    listen 80;
-    server_name api.yourdomain.com;
-
-    location / {
-        proxy_pass http://localhost:3001;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
-        proxy_set_header X-Forwarded-For $remote_addr;
-    }
-}
-```
-
-Kemudian setup SSL:
+4. **Regular updates:**
 ```bash
-sudo certbot --nginx -d api.yourdomain.com
+# Update PM2
+npm update -g pm2
+
+# Update cloudflared
+sudo cloudflared update
+
+# Update dependencies
+npm audit fix
+```
+
+5. **Monitor logs:**
+   - Check PM2 logs daily
+   - Review Cloudflare Analytics
+   - Set up alerts for errors
+
+---
+
+## Maintenance
+
+### Update Application
+
+```bash
+# Pull latest code
+git pull
+
+# Install dependencies
+npm install
+
+# Build
+npm run build
+
+# Restart PM2
+pm2 restart renamerged
+
+# Check status
+pm2 status
+pm2 logs renamerged
+```
+
+### Restart Services
+
+```bash
+# Restart PM2 app
+pm2 restart renamerged
+
+# Restart tunnel
+sudo systemctl restart cloudflared
+
+# Restart both
+pm2 restart renamerged && sudo systemctl restart cloudflared
+```
+
+### Stop Services
+
+```bash
+# Stop PM2 app
+pm2 stop renamerged
+
+# Stop tunnel
+sudo systemctl stop cloudflared
 ```
 
 ---
 
-## Notes
+## Cost
 
-- Database SQLite ada di `server/downloads.db`
-- Frontend fully static, deploy ke CDN global Cloudflare
-- Backend bisa jalan di komputer rumah dengan internet biasa
-- Cloudflare Tunnel handle SSL & DDoS protection otomatis
-- Zero downtime deployment untuk frontend (via Git auto-deploy)
+- **Cloudflare Tunnel:** Free
+- **Cloudflare Zero Trust:** Free tier (up to 50 users)
+- **Cloudflare SSL:** Free
+- **PM2:** Free
+- **Server:** Your existing server/VPS cost
+
+**Total additional cost: $0**
+
+---
+
+## Architecture Summary
+
+```
+Internet
+   ↓
+Cloudflare Network (SSL/DDoS Protection)
+   ↓
+Cloudflare Tunnel (encrypted connection)
+   ↓
+Your Server (localhost:3001)
+   ↓
+PM2 Process (Vite Preview)
+   ↓
+Built React App
+```
+
+**Benefits:**
+- No need to expose ports to internet
+- Free SSL certificates
+- DDoS protection included
+- CDN caching
+- Zero Trust security
+- Easy to manage
+
+---
+
+## Quick Reference
+
+```bash
+# PM2 Commands
+pm2 start ecosystem.config.cjs    # Start app
+pm2 restart renamerged            # Restart
+pm2 stop renamerged               # Stop
+pm2 logs renamerged               # View logs
+pm2 monit                         # Monitor
+
+# Cloudflare Tunnel Commands
+cloudflared tunnel run renamerged-tunnel     # Run manually
+sudo systemctl start cloudflared             # Start service
+sudo systemctl restart cloudflared           # Restart service
+sudo systemctl status cloudflared            # Check status
+cloudflared tunnel info renamerged-tunnel    # Tunnel info
+
+# Debugging
+pm2 logs renamerged --lines 100              # App logs
+sudo journalctl -u cloudflared -f            # Tunnel logs
+netstat -tulpn | grep 3001                   # Check port
+```
