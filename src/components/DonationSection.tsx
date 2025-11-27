@@ -47,21 +47,24 @@ export default function DonationSection() {
             </div>
           </motion.button>
 
-          {showQR && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.3 }}
-              className="bg-white rounded-2xl p-6 max-w-sm mx-auto mb-8 shadow-2xl"
-            >
+          <motion.div
+            initial={false}
+            animate={{
+              height: showQR ? 'auto' : 0,
+              opacity: showQR ? 1 : 0,
+            }}
+            transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+            className="overflow-hidden"
+          >
+            <div className="bg-white rounded-2xl p-6 max-w-sm mx-auto mb-8 shadow-2xl">
               <img
                 src="/image.png"
                 alt="QRIS Code untuk Donasi"
                 className="w-full h-auto rounded-lg"
               />
               <p className="text-gray-600 text-sm mt-4">Scan dengan aplikasi mobile banking atau e-wallet Anda</p>
-            </motion.div>
-          )}
+            </div>
+          </motion.div>
 
           <motion.div
             initial={{ opacity: 0 }}
