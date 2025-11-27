@@ -25,6 +25,7 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json());
+app.use(express.static(join(__dirname, '../dist')));
 
 const db = new Database(join(__dirname, 'downloads.db'));
 
@@ -82,6 +83,10 @@ app.get('/api/download-count', (req, res) => {
       error: 'Failed to fetch download count'
     });
   }
+});
+
+app.get('*', (req, res) => {
+  res.sendFile(join(__dirname, '../dist/index.html'));
 });
 
 app.listen(PORT, () => {
