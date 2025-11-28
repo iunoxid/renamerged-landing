@@ -16,7 +16,7 @@ interface ChangelogData {
 
 export default function ChangelogSection() {
   const [changelog, setChangelog] = useState<ChangelogData | null>(null);
-  const [expandedVersions, setExpandedVersions] = useState<Set<string>>(new Set(['3.0.0']));
+  const [expandedVersions, setExpandedVersions] = useState<Set<string>>(new Set());
   const [showAllVersions, setShowAllVersions] = useState(false);
 
   const INITIAL_VISIBLE_COUNT = 3;
@@ -24,7 +24,12 @@ export default function ChangelogSection() {
   useEffect(() => {
     fetch('/changelog.json')
       .then((res) => res.json())
-      .then((data) => setChangelog(data))
+      .then((data) => {
+        setChangelog(data);
+        if (data.versions.length > 0) {
+          setExpandedVersions(new Set([data.versions[0].version]));
+        }
+      })
       .catch((err) => console.error('Error loading changelog:', err));
   }, []);
 

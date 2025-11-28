@@ -1,6 +1,15 @@
 {
   "versions": [
     {
+      "version": "3.0.1",
+      "date": "28/11/2025",
+      "penambahan": [],
+      "perubahan": [],
+      "perbaikan": [
+        "Fix Bug Draggable Components tidak tersave"
+      ]
+    },
+    {
       "version": "3.0.0",
       "date": "25/11/2025",
       "penambahan": [
