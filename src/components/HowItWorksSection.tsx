@@ -54,7 +54,7 @@ export default function HowItWorksSection() {
                 transition={{ duration: 0.6, delay: index * 0.15 }}
                 className="relative group flex-1"
               >
-                <div className="relative bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-sm border border-purple-500/20 rounded-2xl p-6 sm:p-8 hover:border-purple-500/50 transition-all duration-300 h-full hover:shadow-2xl hover:shadow-purple-500/20">
+                <div className="relative bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-sm border border-purple-500/20 rounded-2xl p-6 sm:p-8 hover:border-purple-500/50 transition-all duration-300 h-full hover:shadow-2xl hover:shadow-purple-500/20 overflow-hidden">
                   <div className="absolute -top-6 sm:-top-8 left-6 sm:left-8">
                     <div className="relative">
                       <motion.div
@@ -79,8 +79,8 @@ export default function HowItWorksSection() {
                     </p>
                   </div>
 
-                  <div className="absolute inset-0 bg-gradient-to-r from-purple-600/0 via-purple-500/0 to-blue-600/0 group-hover:from-purple-600/20 group-hover:via-purple-500/20 group-hover:to-blue-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl pointer-events-none" />
-                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ borderBottomLeftRadius: '1rem', borderBottomRightRadius: '1rem' }} />
+                  <div className="absolute inset-0 bg-gradient-to-r from-purple-600/0 via-purple-500/0 to-blue-600/0 group-hover:from-purple-600/20 group-hover:via-purple-500/20 group-hover:to-blue-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 </div>
               </motion.div>
 
