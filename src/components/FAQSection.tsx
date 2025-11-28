@@ -49,10 +49,10 @@ export default function FAQSection() {
           className="text-center mb-16"
         >
           <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white leading-tight">
-            Frequently Asked Questions
+            FAQ - Cara Rename Faktur Pajak Coretax
           </h2>
           <p className="text-gray-400 text-lg">
-            Pertanyaan yang sering ditanyakan tentang Renamerged
+            Pertanyaan seputar cara ubah nama faktur pajak sekaligus banyak file
           </p>
         </motion.div>
 

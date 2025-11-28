@@ -10,6 +10,7 @@ interface HeroSectionProps {
 export default function HeroSection({ onDownloadClick }: HeroSectionProps) {
   return (
     <section className="relative min-h-screen flex items-center justify-center pt-16 px-4 overflow-hidden">
+      <h1 className="sr-only">Cara Rename Faktur Pajak Coretax Sekaligus Banyak File - Auto Rename Ribuan Faktur dalam 1 Klik</h1>
       <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-slate-900 to-blue-900/20" />
 
       <div className="absolute inset-0 overflow-hidden">
@@ -71,7 +72,7 @@ export default function HeroSection({ onDownloadClick }: HeroSectionProps) {
             transition={{ delay: 0.4 }}
             className="text-gray-400 text-base sm:text-lg md:text-xl mb-8 leading-relaxed"
           >
-            Kelola ribuan PDF faktur pajak tanpa internet. Data 100% aman di komputer Anda. Aplikasi Windows Gratis untuk produktivitas maksimal.
+            Cara cepat ganti nama file faktur pajak dari Coretax - rename ribuan faktur sekaligus dalam 1 klik. 100% offline, gratis, dan aman. Data tetap privat di komputer Anda.
           </motion.p>
 
           <div>
