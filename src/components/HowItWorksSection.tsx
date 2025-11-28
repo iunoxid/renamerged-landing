@@ -79,7 +79,7 @@ export default function HowItWorksSection() {
                     </p>
                   </div>
 
-                  <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-purple-600 to-blue-600 rounded-b-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-b-2xl overflow-hidden" />
                 </div>
               </motion.div>
 
