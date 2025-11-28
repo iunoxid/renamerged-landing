@@ -129,11 +129,10 @@ export default function ChangelogSection() {
                           <Plus className="text-green-600" size={20} />
                           <h3 className="font-semibold text-gray-800">Penambahan</h3>
                         </div>
-                        <ul className="space-y-2 ml-7">
+                        <ul className="space-y-2 ml-7 list-disc list-outside marker:text-green-600">
                           {version.penambahan.map((item, i) => (
-                            <li key={i} className="text-gray-600 flex items-start gap-2">
-                              <span className="text-green-600 mt-1">•</span>
-                              <span>{item}</span>
+                            <li key={i} className="text-gray-600 pl-2">
+                              {item}
                             </li>
                           ))}
                         </ul>
@@ -146,11 +145,10 @@ export default function ChangelogSection() {
                           <RefreshCw className="text-blue-600" size={20} />
                           <h3 className="font-semibold text-gray-800">Perubahan</h3>
                         </div>
-                        <ul className="space-y-2 ml-7">
+                        <ul className="space-y-2 ml-7 list-disc list-outside marker:text-blue-600">
                           {version.perubahan.map((item, i) => (
-                            <li key={i} className="text-gray-600 flex items-start gap-2">
-                              <span className="text-blue-600 mt-1">•</span>
-                              <span>{item}</span>
+                            <li key={i} className="text-gray-600 pl-2">
+                              {item}
                             </li>
                           ))}
                         </ul>
@@ -163,11 +161,10 @@ export default function ChangelogSection() {
                           <Wrench className="text-orange-600" size={20} />
                           <h3 className="font-semibold text-gray-800">Perbaikan</h3>
                         </div>
-                        <ul className="space-y-2 ml-7">
+                        <ul className="space-y-2 ml-7 list-disc list-outside marker:text-orange-600">
                           {version.perbaikan.map((item, i) => (
-                            <li key={i} className="text-gray-600 flex items-start gap-2">
-                              <span className="text-orange-600 mt-1">•</span>
-                              <span>{item}</span>
+                            <li key={i} className="text-gray-600 pl-2">
+                              {item}
                             </li>
                           ))}
                         </ul>
@@ -256,11 +253,10 @@ export default function ChangelogSection() {
                               <Plus className="text-green-600" size={20} />
                               <h3 className="font-semibold text-gray-800">Penambahan</h3>
                             </div>
-                            <ul className="space-y-2 ml-7">
+                            <ul className="space-y-2 ml-7 list-disc list-outside marker:text-green-600">
                               {version.penambahan.map((item, i) => (
-                                <li key={i} className="text-gray-600 flex items-start gap-2">
-                                  <span className="text-green-600 mt-1">•</span>
-                                  <span>{item}</span>
+                                <li key={i} className="text-gray-600 pl-2">
+                                  {item}
                                 </li>
                               ))}
                             </ul>
@@ -273,11 +269,10 @@ export default function ChangelogSection() {
                               <RefreshCw className="text-blue-600" size={20} />
                               <h3 className="font-semibold text-gray-800">Perubahan</h3>
                             </div>
-                            <ul className="space-y-2 ml-7">
+                            <ul className="space-y-2 ml-7 list-disc list-outside marker:text-blue-600">
                               {version.perubahan.map((item, i) => (
-                                <li key={i} className="text-gray-600 flex items-start gap-2">
-                                  <span className="text-blue-600 mt-1">•</span>
-                                  <span>{item}</span>
+                                <li key={i} className="text-gray-600 pl-2">
+                                  {item}
                                 </li>
                               ))}
                             </ul>
@@ -290,11 +285,10 @@ export default function ChangelogSection() {
                               <Wrench className="text-orange-600" size={20} />
                               <h3 className="font-semibold text-gray-800">Perbaikan</h3>
                             </div>
-                            <ul className="space-y-2 ml-7">
+                            <ul className="space-y-2 ml-7 list-disc list-outside marker:text-orange-600">
                               {version.perbaikan.map((item, i) => (
-                                <li key={i} className="text-gray-600 flex items-start gap-2">
-                                  <span className="text-orange-600 mt-1">•</span>
-                                  <span>{item}</span>
+                                <li key={i} className="text-gray-600 pl-2">
+                                  {item}
                                 </li>
                               ))}
                             </ul>
