@@ -1,8 +1,10 @@
 import { motion } from 'framer-motion';
 import { MessageSquare, Github, Mail, FileText, Shield } from 'lucide-react';
-import { APP_CONFIG } from '../config';
+import { useAppConfig } from '../hooks/useAppConfig';
 
 export default function Footer() {
+  const { config } = useAppConfig();
+
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
     if (element) {
@@ -80,7 +82,7 @@ export default function Footer() {
                 <span>Security Report</span>
               </button>
               <a
-                href="https://github.com/iunoxid"
+                href={config.githubUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 text-gray-400 hover:text-purple-400 transition-colors text-sm"
@@ -114,7 +116,7 @@ export default function Footer() {
                 <span>Request Feature</span>
               </a>
               <a
-                href="https://github.com/iunoxid"
+                href={config.githubUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 text-gray-400 hover:text-purple-400 transition-colors text-sm"

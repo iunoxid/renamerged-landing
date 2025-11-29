@@ -2,7 +2,7 @@ import { X, Download, CheckCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useRef } from 'react';
 import ReCAPTCHA from 'react-google-recaptcha';
-import { APP_CONFIG } from '../config';
+import { useAppConfig } from '../hooks/useAppConfig';
 
 interface DownloadModalProps {
   isOpen: boolean;
@@ -10,6 +10,7 @@ interface DownloadModalProps {
 }
 
 export default function DownloadModal({ isOpen, onClose }: DownloadModalProps) {
+  const { config } = useAppConfig();
   const [isAgreed, setIsAgreed] = useState(false);
   const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
   const recaptchaRef = useRef<ReCAPTCHA>(null);
@@ -29,7 +30,7 @@ export default function DownloadModal({ isOpen, onClose }: DownloadModalProps) {
         console.error('Failed to track download:', error);
       }
 
-      window.open(APP_CONFIG.downloadUrl, '_blank');
+      window.open(config.downloadUrl, '_blank');
       onClose();
       setIsAgreed(false);
       setRecaptchaToken(null);
@@ -82,7 +83,7 @@ export default function DownloadModal({ isOpen, onClose }: DownloadModalProps) {
                 Download Renamerged
               </h3>
               <p className="text-sm sm:text-base text-gray-400 text-center mb-6 sm:mb-8">
-                Version {APP_CONFIG.appVersion} untuk Windows 10/11
+                Version {config.appVersion} untuk Windows 10/11
               </p>
 
               <div className="space-y-4 sm:space-y-6 mb-6 sm:mb-8">
@@ -129,7 +130,7 @@ export default function DownloadModal({ isOpen, onClose }: DownloadModalProps) {
               </motion.button>
 
               <p className="text-gray-500 text-xs text-center mt-4">
-                File size: {APP_CONFIG.fileSize} • Format: .exe • Kompatibel: Windows 10/11
+                File size: {config.fileSize} • Format: .exe • Kompatibel: Windows 10/11
               </p>
             </div>
           </motion.div>

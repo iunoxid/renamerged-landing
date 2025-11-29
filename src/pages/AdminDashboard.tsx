@@ -14,7 +14,11 @@ interface ChangelogEntry {
   id: string;
   version: string;
   date: string;
-  changes: string[];
+  changes: {
+    penambahan: string[];
+    perubahan: string[];
+    perbaikan: string[];
+  };
   sort_order: number;
 }
 
@@ -91,8 +95,12 @@ export default function AdminDashboard() {
     const newEntry: ChangelogEntry = {
       id: crypto.randomUUID(),
       version: '1.0.0',
-      date: new Date().toISOString().split('T')[0],
-      changes: ['New feature'],
+      date: new Date().toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '/'),
+      changes: {
+        penambahan: [],
+        perubahan: [],
+        perbaikan: []
+      },
       sort_order: changelog.length
     };
     setChangelog([newEntry, ...changelog]);
@@ -104,29 +112,38 @@ export default function AdminDashboard() {
     ));
   };
 
-  const addChange = (entryId: string) => {
+  const addChange = (entryId: string, type: 'penambahan' | 'perubahan' | 'perbaikan') => {
     setChangelog(changelog.map(entry =>
       entry.id === entryId
-        ? { ...entry, changes: [...entry.changes, 'New change'] }
+        ? { ...entry, changes: { ...entry.changes, [type]: [...entry.changes[type], ''] } }
         : entry
     ));
   };
 
-  const updateChange = (entryId: string, changeIndex: number, value: string) => {
+  const updateChange = (entryId: string, type: 'penambahan' | 'perubahan' | 'perbaikan', changeIndex: number, value: string) => {
     setChangelog(changelog.map(entry =>
       entry.id === entryId
         ? {
             ...entry,
-            changes: entry.changes.map((c, i) => i === changeIndex ? value : c)
+            changes: {
+              ...entry.changes,
+              [type]: entry.changes[type].map((c, i) => i === changeIndex ? value : c)
+            }
           }
         : entry
     ));
   };
 
-  const removeChange = (entryId: string, changeIndex: number) => {
+  const removeChange = (entryId: string, type: 'penambahan' | 'perubahan' | 'perbaikan', changeIndex: number) => {
     setChangelog(changelog.map(entry =>
       entry.id === entryId
-        ? { ...entry, changes: entry.changes.filter((_, i) => i !== changeIndex) }
+        ? {
+            ...entry,
+            changes: {
+              ...entry.changes,
+              [type]: entry.changes[type].filter((_, i) => i !== changeIndex)
+            }
+          }
         : entry
     ));
   };
@@ -290,7 +307,7 @@ export default function AdminDashboard() {
 
                 <div className="space-y-4">
                   {changelog.map((entry) => (
-                    <div key={entry.id} className="p-4 bg-slate-900/50 border border-slate-600 rounded-lg space-y-3">
+                    <div key={entry.id} className="p-4 bg-slate-900/50 border border-slate-600 rounded-lg space-y-4">
                       <div className="flex gap-3">
                         <input
                           type="text"
@@ -300,9 +317,10 @@ export default function AdminDashboard() {
                           className="flex-1 px-3 py-2 bg-slate-800 border border-slate-600 rounded text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                         <input
-                          type="date"
+                          type="text"
                           value={entry.date}
                           onChange={(e) => updateChangelogEntry(entry.id, 'date', e.target.value)}
+                          placeholder="DD/MM/YYYY"
                           className="px-3 py-2 bg-slate-800 border border-slate-600 rounded text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                         <button
@@ -313,29 +331,99 @@ export default function AdminDashboard() {
                         </button>
                       </div>
 
-                      <div className="space-y-2">
-                        {entry.changes.map((change, index) => (
-                          <div key={index} className="flex gap-2">
-                            <input
-                              type="text"
-                              value={change}
-                              onChange={(e) => updateChange(entry.id, index, e.target.value)}
-                              className="flex-1 px-3 py-2 bg-slate-800 border border-slate-600 rounded text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            />
+                      <div className="space-y-3">
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <h4 className="text-sm font-medium text-green-400">Penambahan</h4>
                             <button
-                              onClick={() => removeChange(entry.id, index)}
-                              className="px-3 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded transition-colors"
+                              onClick={() => addChange(entry.id, 'penambahan')}
+                              className="px-2 py-1 bg-green-500/10 hover:bg-green-500/20 text-green-400 text-xs rounded transition-colors"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Plus className="w-3 h-3" />
                             </button>
                           </div>
-                        ))}
-                        <button
-                          onClick={() => addChange(entry.id)}
-                          className="w-full px-3 py-2 bg-slate-700/50 hover:bg-slate-700 text-slate-300 text-sm rounded transition-colors"
-                        >
-                          + Add Change
-                        </button>
+                          <div className="space-y-2">
+                            {entry.changes.penambahan.map((change, index) => (
+                              <div key={index} className="flex gap-2">
+                                <input
+                                  type="text"
+                                  value={change}
+                                  onChange={(e) => updateChange(entry.id, 'penambahan', index, e.target.value)}
+                                  className="flex-1 px-3 py-2 bg-slate-800 border border-slate-600 rounded text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  placeholder="Tambahkan fitur baru..."
+                                />
+                                <button
+                                  onClick={() => removeChange(entry.id, 'penambahan', index)}
+                                  className="px-3 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded transition-colors"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <h4 className="text-sm font-medium text-blue-400">Perubahan</h4>
+                            <button
+                              onClick={() => addChange(entry.id, 'perubahan')}
+                              className="px-2 py-1 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 text-xs rounded transition-colors"
+                            >
+                              <Plus className="w-3 h-3" />
+                            </button>
+                          </div>
+                          <div className="space-y-2">
+                            {entry.changes.perubahan.map((change, index) => (
+                              <div key={index} className="flex gap-2">
+                                <input
+                                  type="text"
+                                  value={change}
+                                  onChange={(e) => updateChange(entry.id, 'perubahan', index, e.target.value)}
+                                  className="flex-1 px-3 py-2 bg-slate-800 border border-slate-600 rounded text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  placeholder="Ubah fitur yang ada..."
+                                />
+                                <button
+                                  onClick={() => removeChange(entry.id, 'perubahan', index)}
+                                  className="px-3 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded transition-colors"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <h4 className="text-sm font-medium text-orange-400">Perbaikan</h4>
+                            <button
+                              onClick={() => addChange(entry.id, 'perbaikan')}
+                              className="px-2 py-1 bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 text-xs rounded transition-colors"
+                            >
+                              <Plus className="w-3 h-3" />
+                            </button>
+                          </div>
+                          <div className="space-y-2">
+                            {entry.changes.perbaikan.map((change, index) => (
+                              <div key={index} className="flex gap-2">
+                                <input
+                                  type="text"
+                                  value={change}
+                                  onChange={(e) => updateChange(entry.id, 'perbaikan', index, e.target.value)}
+                                  className="flex-1 px-3 py-2 bg-slate-800 border border-slate-600 rounded text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  placeholder="Perbaiki bug..."
+                                />
+                                <button
+                                  onClick={() => removeChange(entry.id, 'perbaikan', index)}
+                                  className="px-3 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded transition-colors"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   ))}

@@ -1,6 +1,6 @@
 import { Download, Zap, ShieldCheck, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { APP_CONFIG } from '../config';
+import { useAppConfig } from '../hooks/useAppConfig';
 import DownloadCounter from './DownloadCounter';
 
 interface HeroSectionProps {
@@ -8,6 +8,8 @@ interface HeroSectionProps {
 }
 
 export default function HeroSection({ onDownloadClick }: HeroSectionProps) {
+  const { config } = useAppConfig();
+
   return (
     <section className="relative min-h-screen flex items-center justify-center pt-16 px-4 overflow-hidden">
       <h1 className="sr-only">Cara Rename Faktur Pajak Coretax Sekaligus Banyak File - Auto Rename Ribuan Faktur dalam 1 Klik</h1>
@@ -116,7 +118,7 @@ export default function HeroSection({ onDownloadClick }: HeroSectionProps) {
               <span className="text-gray-600">•</span>
               <div className="flex items-center gap-1">
                 <Check className="text-gray-400" size={14} />
-                <span className="text-gray-400 text-sm">File size: {APP_CONFIG.fileSize}</span>
+                <span className="text-gray-400 text-sm">File size: {config.fileSize}</span>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -124,7 +126,7 @@ export default function HeroSection({ onDownloadClick }: HeroSectionProps) {
               <span className="text-green-400 text-sm font-medium">100% Clean & Safe (Scanned by VirusTotal)</span>
             </div>
             <a
-              href={APP_CONFIG.virusTotalUrl}
+              href={config.virusTotalUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-400 hover:text-blue-300 text-sm underline inline-block transition-colors"

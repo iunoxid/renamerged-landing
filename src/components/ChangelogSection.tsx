@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, RefreshCw, Wrench, Calendar, ChevronDown } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 interface ChangelogVersion {
   version: string;
@@ -22,15 +23,32 @@ export default function ChangelogSection() {
   const INITIAL_VISIBLE_COUNT = 3;
 
   useEffect(() => {
-    fetch('/changelog.json')
-      .then((res) => res.json())
-      .then((data) => {
-        setChangelog(data);
-        if (data.versions.length > 0) {
-          setExpandedVersions(new Set([data.versions[0].version]));
-        }
-      })
-      .catch((err) => console.error('Error loading changelog:', err));
+    async function loadChangelog() {
+      const { data, error } = await supabase
+        .from('changelog_entries')
+        .select('*')
+        .order('sort_order', { ascending: true });
+
+      if (error || !data) {
+        console.error('Error loading changelog:', error);
+        return;
+      }
+
+      const versions = data.map((entry: any) => ({
+        version: entry.version,
+        date: entry.date,
+        penambahan: entry.changes.penambahan || [],
+        perubahan: entry.changes.perubahan || [],
+        perbaikan: entry.changes.perbaikan || [],
+      }));
+
+      setChangelog({ versions });
+      if (versions.length > 0) {
+        setExpandedVersions(new Set([versions[0].version]));
+      }
+    }
+
+    loadChangelog();
   }, []);
 
   const toggleVersion = (version: string) => {

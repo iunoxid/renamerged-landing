@@ -1,12 +1,14 @@
 import { Download } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { APP_CONFIG } from '../config';
+import { useAppConfig } from '../hooks/useAppConfig';
 
 interface NavbarProps {
   onDownloadClick: () => void;
 }
 
 export default function Navbar({ onDownloadClick }: NavbarProps) {
+  const { config } = useAppConfig();
+
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
     if (element) {
@@ -35,7 +37,7 @@ export default function Navbar({ onDownloadClick }: NavbarProps) {
               <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent leading-normal pb-0.5">
                 Renamerged
               </span>
-              <span className="text-xs text-gray-500 leading-none">v{APP_CONFIG.appVersion}</span>
+              <span className="text-xs text-gray-500 leading-none">v{config.appVersion}</span>
             </div>
           </motion.div>
 
