@@ -3,6 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Lock, Mail, AlertCircle } from 'lucide-react';
 import ReCAPTCHA from 'react-google-recaptcha';
+import {
+  getClientInfo,
+  logLoginAttempt,
+  checkAccountLockout,
+  getRecentFailedAttempts,
+  getSecurityConfig,
+  lockAccount,
+  sendTelegramNotification,
+} from '../utils/securityHelpers';
 
 export default function AdminLogin() {
   const [email, setEmail] = useState('');
@@ -16,16 +25,64 @@ export default function AdminLogin() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const clientInfo = await getClientInfo();
+
+      const lockoutStatus = await checkAccountLockout(email);
+      if (lockoutStatus.isLocked && lockoutStatus.unlockAt) {
+        const minutesLeft = Math.ceil(
+          (lockoutStatus.unlockAt.getTime() - Date.now()) / 60000
+        );
+        throw new Error(
+          `Account is locked due to multiple failed login attempts. Try again in ${minutesLeft} minutes.`
+        );
+      }
+
+      const { error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) throw error;
+      if (authError) {
+        await logLoginAttempt({
+          email,
+          ip_address: clientInfo.ip_address,
+          user_agent: clientInfo.user_agent,
+          success: false,
+          failure_reason: authError.message,
+        });
+
+        const failedAttempts = await getRecentFailedAttempts(email);
+        const config = await getSecurityConfig();
+
+        if (failedAttempts % 3 === 0) {
+          await sendTelegramNotification({
+            type: 'failed_login',
+            email,
+            ip_address: clientInfo.ip_address,
+            details: `${failedAttempts} failed attempts in the last hour`,
+          });
+        }
+
+        if (failedAttempts >= config.max_failed_attempts) {
+          await lockAccount(email, failedAttempts, clientInfo.ip_address);
+          throw new Error(
+            `Account locked after ${config.max_failed_attempts} failed attempts. You will receive a notification via Telegram.`
+          );
+        }
+
+        throw authError;
+      }
+
+      await logLoginAttempt({
+        email,
+        ip_address: clientInfo.ip_address,
+        user_agent: clientInfo.user_agent,
+        success: true,
+      });
+
       navigate('/admin/dashboard');
     } catch (err: any) {
       setError(err.message || 'Login failed');

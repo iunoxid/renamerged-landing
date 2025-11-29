@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { LogOut, Settings, FileText, Plus, Trash2, Save, AlertCircle, ChevronDown, Key, Search, HelpCircle, BarChart3, Users, Download as DownloadIcon, Sliders } from 'lucide-react';
+import { LogOut, Settings, FileText, Plus, Trash2, Save, AlertCircle, ChevronDown, Key, Search, HelpCircle, BarChart3, Users, Download as DownloadIcon, Sliders, Shield, Monitor } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import SEOManager from '../components/admin/SEOManager';
 import FAQManager from '../components/admin/FAQManager';
@@ -9,6 +9,8 @@ import DownloadChart from '../components/admin/DownloadChart';
 import VisitorAnalytics from '../components/admin/VisitorAnalytics';
 import RecentDownloads from '../components/admin/RecentDownloads';
 import AppConfigManager from '../components/admin/AppConfigManager';
+import SecurityDashboard from '../components/admin/SecurityDashboard';
+import SessionManager from '../components/admin/SessionManager';
 import { ToastProvider, useToast } from '../components/admin/ToastContainer';
 
 interface SiteConfig {
@@ -49,7 +51,7 @@ function AdminDashboardContent() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordLoading, setPasswordLoading] = useState(false);
 
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'config' | 'changelog' | 'password' | 'seo' | 'faq'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'config' | 'changelog' | 'password' | 'seo' | 'faq' | 'security' | 'sessions'>('dashboard');
 
   useEffect(() => {
     checkAuth();
@@ -391,6 +393,28 @@ function AdminDashboardContent() {
             >
               <Key className="w-5 h-5" />
               Password
+            </button>
+            <button
+              onClick={() => setActiveTab('security')}
+              className={`flex items-center justify-center gap-2 px-4 py-4 font-semibold transition-colors whitespace-nowrap ${
+                activeTab === 'security'
+                  ? 'bg-blue-500/10 text-blue-400 border-b-2 border-blue-500'
+                  : 'text-slate-400 hover:text-slate-300 hover:bg-slate-700/50'
+              }`}
+            >
+              <Shield className="w-5 h-5" />
+              Security
+            </button>
+            <button
+              onClick={() => setActiveTab('sessions')}
+              className={`flex items-center justify-center gap-2 px-4 py-4 font-semibold transition-colors whitespace-nowrap ${
+                activeTab === 'sessions'
+                  ? 'bg-blue-500/10 text-blue-400 border-b-2 border-blue-500'
+                  : 'text-slate-400 hover:text-slate-300 hover:bg-slate-700/50'
+              }`}
+            >
+              <Monitor className="w-5 h-5" />
+              Sessions
             </button>
           </div>
 
@@ -895,6 +919,26 @@ function AdminDashboardContent() {
                     </p>
                   </div>
                 </form>
+              </motion.div>
+            )}
+
+            {activeTab === 'security' && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4 }}
+              >
+                <SecurityDashboard />
+              </motion.div>
+            )}
+
+            {activeTab === 'sessions' && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4 }}
+              >
+                <SessionManager />
               </motion.div>
             )}
           </div>
