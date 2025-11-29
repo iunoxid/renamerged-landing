@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSEO } from '../hooks/useSEO';
 import Navbar from '../components/Navbar';
 import HeroSection from '../components/HeroSection';
 import FeaturesSection from '../components/FeaturesSection';
@@ -16,6 +17,7 @@ import DownloadModal from '../components/DownloadModal';
 export default function HomePage() {
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
   const navigate = useNavigate();
+  useSEO();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

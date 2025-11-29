@@ -1,40 +1,11 @@
 import { motion } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
 import { useState } from 'react';
-
-const faqs = [
-  {
-    question: 'Apakah aplikasi ini benar-benar gratis?',
-    answer: 'Ya, 100% Gratis untuk selamanya (Freeware). Tidak ada fitur berbayar. Dukungan dana hanya melalui donasi sukarela.',
-  },
-  {
-    question: 'Apakah bisa dijalankan di MacOS atau HP?',
-    answer: 'Saat ini Renamerged hanya tersedia khusus untuk sistem operasi Windows (10 dan 11).',
-  },
-  {
-    question: 'Bagaimana cara update ke versi baru?',
-    answer: 'Cukup kunjungi website ini lagi, download versi terbaru, dan jalankan. Settingan lama Anda tidak akan hilang.',
-  },
-  {
-    question: 'Apakah data faktur saya aman?',
-    answer: 'Sangat aman. Aplikasi bekerja offline tanpa internet. File PDF Anda tidak pernah keluar dari komputer Anda.',
-  },
-  {
-    question: 'Apakah bisa untuk scan PDF dari kamera/scanner?',
-    answer: 'TIDAK. Renamerged hanya support file PDF hasil download dari Coretax DJP. Tidak support scan PDF. Jika kesusahan mendapatkan Faktur Pajaknya, tinggal cari di Faktur Keluaran (sebagai penjual) atau Faktur Masukan (sebagai pembeli) di dashboard Coretax.',
-  },
-  {
-    question: 'Berapa banyak file PDF yang bisa diproses sekaligus?',
-    answer: 'Tidak ada batasan! Anda bisa memproses ratusan bahkan ribuan file PDF sekaligus. Kecepatan pemrosesan tergantung pada spesifikasi komputer Anda.',
-  },
-  {
-    question: 'Bagaimana cara kerja fitur Merge PDF?',
-    answer: 'Fitur Merge PDF menggabungkan semua file PDF dalam folder input menjadi satu file PDF besar. File akan digabung sesuai urutan nama file setelah di-rename. Sangat berguna untuk membuat arsip bulanan atau tahunan.',
-  },
-];
+import { useFAQ } from '../hooks/useFAQ';
 
 export default function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const { faqs, loading } = useFAQ();
 
   return (
     <section id="faq" className="relative py-24 px-4">
@@ -57,7 +28,16 @@ export default function FAQSection() {
         </motion.div>
 
         <div className="space-y-4">
-          {faqs.map((faq, index) => (
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
+            </div>
+          ) : faqs.length === 0 ? (
+            <div className="text-center py-12 text-gray-400">
+              No FAQs available at the moment.
+            </div>
+          ) : (
+            faqs.map((faq, index) => (
             <motion.div
               key={index}
               initial={{ opacity: 0, y: 20 }}
@@ -97,7 +77,8 @@ export default function FAQSection() {
                 </motion.div>
               </button>
             </motion.div>
-          ))}
+            ))
+          )}
         </div>
 
         <motion.div
