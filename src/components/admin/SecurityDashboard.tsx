@@ -31,6 +31,7 @@ interface SecurityConfig {
   max_failed_attempts: number;
   lockout_duration_minutes: number;
   session_timeout_minutes: number;
+  log_retention_days: number;
 }
 
 export default function SecurityDashboard() {
@@ -39,6 +40,7 @@ export default function SecurityDashboard() {
   const [securityConfig, setSecurityConfig] = useState<SecurityConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [savingConfig, setSavingConfig] = useState(false);
+  const [cleaningLogs, setCleaningLogs] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalAttempts, setTotalAttempts] = useState(0);
   const attemptsPerPage = 20;
@@ -122,6 +124,7 @@ export default function SecurityDashboard() {
           max_failed_attempts: securityConfig.max_failed_attempts,
           lockout_duration_minutes: securityConfig.lockout_duration_minutes,
           session_timeout_minutes: securityConfig.session_timeout_minutes,
+          log_retention_days: securityConfig.log_retention_days,
           updated_at: new Date().toISOString(),
         })
         .eq('id', securityConfig.id);
@@ -134,6 +137,27 @@ export default function SecurityDashboard() {
       showToast('Failed to save security settings', 'error');
     } finally {
       setSavingConfig(false);
+    }
+  };
+
+  const handleCleanupLogs = async () => {
+    if (!confirm('This will permanently delete login attempts older than the configured retention period. Continue?')) {
+      return;
+    }
+
+    setCleaningLogs(true);
+    try {
+      const { error } = await supabase.rpc('cleanup_old_login_attempts');
+
+      if (error) throw error;
+
+      showToast('Old logs cleaned up successfully', 'success');
+      loadData();
+    } catch (error) {
+      console.error('Failed to cleanup logs:', error);
+      showToast('Failed to cleanup old logs', 'error');
+    } finally {
+      setCleaningLogs(false);
     }
   };
 
@@ -248,6 +272,19 @@ export default function SecurityDashboard() {
                 max="1440"
               />
             </div>
+
+            <div>
+              <label className="block text-sm text-slate-400 mb-2">Log Retention (days)</label>
+              <input
+                type="number"
+                value={securityConfig.log_retention_days}
+                onChange={(e) => setSecurityConfig({ ...securityConfig, log_retention_days: parseInt(e.target.value) })}
+                className="w-full px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                min="7"
+                max="365"
+              />
+              <p className="text-xs text-slate-500 mt-1">Login attempts older than this will be automatically deleted</p>
+            </div>
           </div>
 
           <div className="mt-4 p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
@@ -308,7 +345,17 @@ export default function SecurityDashboard() {
       )}
 
       <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-white mb-4">Recent Login Attempts</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-white">Recent Login Attempts</h3>
+          <button
+            onClick={handleCleanupLogs}
+            disabled={cleaningLogs}
+            className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 disabled:bg-slate-700 text-red-400 rounded-lg transition-colors flex items-center gap-2 text-sm"
+          >
+            <AlertTriangle className="w-4 h-4" />
+            {cleaningLogs ? 'Cleaning...' : 'Cleanup Old Logs'}
+          </button>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -317,12 +364,13 @@ export default function SecurityDashboard() {
                 <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">IP Address</th>
                 <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Time</th>
                 <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Status</th>
+                <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Details</th>
               </tr>
             </thead>
             <tbody>
               {loginAttempts.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="py-8 text-center text-slate-400">
+                  <td colSpan={5} className="py-8 text-center text-slate-400">
                     No login attempts found
                   </td>
                 </tr>
@@ -347,6 +395,13 @@ export default function SecurityDashboard() {
                       }`}>
                         {attempt.success ? 'Success' : 'Failed'}
                       </span>
+                    </td>
+                    <td className="py-3 px-4 text-sm text-slate-400">
+                      {attempt.success ? (
+                        <span className="text-slate-500">-</span>
+                      ) : (
+                        <span className="text-red-400">{attempt.failure_reason || 'Unknown error'}</span>
+                      )}
                     </td>
                   </tr>
                 ))
