@@ -1,6 +1,23 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Plus, Edit2, Trash2, Save, X, AlertCircle, CheckCircle, MoveUp, MoveDown } from 'lucide-react';
+import { Plus, Edit2, Trash2, Save, X, AlertCircle, CheckCircle, GripVertical } from 'lucide-react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface FAQItem {
   id: string;
@@ -10,6 +27,156 @@ interface FAQItem {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+}
+
+interface SortableFAQItemProps {
+  faq: FAQItem;
+  index: number;
+  editingId: string | null;
+  onEdit: (id: string) => void;
+  onUpdate: (id: string) => void;
+  onDelete: (id: string) => void;
+  onCancelEdit: () => void;
+  onFieldUpdate: (id: string, field: keyof FAQItem, value: any) => void;
+}
+
+function SortableFAQItem({
+  faq,
+  index,
+  editingId,
+  onEdit,
+  onUpdate,
+  onDelete,
+  onCancelEdit,
+  onFieldUpdate,
+}: SortableFAQItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: faq.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`bg-slate-800/50 border ${
+        faq.is_active ? 'border-slate-700' : 'border-red-500/30'
+      } rounded-lg p-6 space-y-4 ${isDragging ? 'z-50 shadow-2xl' : ''}`}
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div
+            {...attributes}
+            {...listeners}
+            className="flex items-center justify-center w-12 h-12 bg-blue-500/20 border border-blue-500/30 rounded-lg flex-shrink-0 cursor-grab active:cursor-grabbing hover:bg-blue-500/30 transition-colors"
+            title="Drag to reorder"
+          >
+            <GripVertical size={24} className="text-blue-400" />
+          </div>
+          <div className="flex items-center justify-center w-10 h-10 bg-slate-700/50 rounded-lg flex-shrink-0">
+            <span className="text-lg font-bold text-slate-300">{index + 1}</span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {editingId === faq.id ? (
+            <>
+              <button
+                onClick={() => onUpdate(faq.id)}
+                className="p-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors"
+              >
+                <Save size={18} />
+              </button>
+              <button
+                onClick={onCancelEdit}
+                className="p-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={() => onEdit(faq.id)}
+                className="p-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+              >
+                <Edit2 size={18} />
+              </button>
+              <button
+                onClick={() => onDelete(faq.id)}
+                className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
+              >
+                <Trash2 size={18} />
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+
+      {editingId === faq.id ? (
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">
+              Question
+            </label>
+            <input
+              type="text"
+              value={faq.question}
+              onChange={(e) => onFieldUpdate(faq.id, 'question', e.target.value)}
+              className="w-full px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">
+              Answer
+            </label>
+            <textarea
+              value={faq.answer}
+              onChange={(e) => onFieldUpdate(faq.id, 'answer', e.target.value)}
+              rows={4}
+              className="w-full px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id={`active_${faq.id}`}
+              checked={faq.is_active}
+              onChange={(e) => onFieldUpdate(faq.id, 'is_active', e.target.checked)}
+              className="w-4 h-4 rounded bg-slate-700 border-slate-600"
+            />
+            <label htmlFor={`active_${faq.id}`} className="text-sm text-slate-300">
+              Active (visible on website)
+            </label>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          <div className="flex items-start justify-between gap-4">
+            <h4 className="text-lg font-semibold text-white">{faq.question}</h4>
+            {!faq.is_active && (
+              <span className="px-2 py-1 bg-red-500/20 text-red-400 text-xs rounded">
+                Inactive
+              </span>
+            )}
+          </div>
+          <p className="text-gray-400 leading-relaxed">{faq.answer}</p>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function FAQManager() {
@@ -23,6 +190,13 @@ export default function FAQManager() {
     answer: '',
     is_active: true,
   });
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   useEffect(() => {
     loadFAQs();
@@ -125,31 +299,35 @@ export default function FAQManager() {
     }
   };
 
-  const handleMove = async (id: string, direction: 'up' | 'down') => {
-    const currentIndex = faqs.findIndex(f => f.id === id);
-    if (currentIndex === -1) return;
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
 
-    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
-    if (targetIndex < 0 || targetIndex >= faqs.length) return;
+    if (!over || active.id === over.id) return;
 
-    const currentFaq = faqs[currentIndex];
-    const targetFaq = faqs[targetIndex];
+    const oldIndex = faqs.findIndex((faq) => faq.id === active.id);
+    const newIndex = faqs.findIndex((faq) => faq.id === over.id);
+
+    const newFaqs = arrayMove(faqs, oldIndex, newIndex);
+    setFaqs(newFaqs);
 
     try {
-      await supabase
-        .from('faq_items')
-        .update({ sort_order: targetFaq.sort_order })
-        .eq('id', currentFaq.id);
+      const updates = newFaqs.map((faq, index) => ({
+        id: faq.id,
+        sort_order: index + 1,
+      }));
 
-      await supabase
-        .from('faq_items')
-        .update({ sort_order: currentFaq.sort_order })
-        .eq('id', targetFaq.id);
+      for (const update of updates) {
+        await supabase
+          .from('faq_items')
+          .update({ sort_order: update.sort_order })
+          .eq('id', update.id);
+      }
 
-      loadFAQs();
+      showMessage('success', 'FAQ order updated!');
     } catch (error) {
-      console.error('Error moving FAQ:', error);
-      showMessage('error', 'Failed to reorder FAQ');
+      console.error('Error updating FAQ order:', error);
+      showMessage('error', 'Failed to reorder FAQs');
+      loadFAQs();
     }
   };
 
@@ -187,7 +365,10 @@ export default function FAQManager() {
       )}
 
       <div className="flex justify-between items-center">
-        <h3 className="text-2xl font-bold text-white">FAQ Management</h3>
+        <div>
+          <h3 className="text-2xl font-bold text-white">FAQ Management</h3>
+          <p className="text-sm text-slate-400 mt-1">Drag items to reorder</p>
+        </div>
         <button
           onClick={() => setIsAdding(!isAdding)}
           className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all"
@@ -256,130 +437,33 @@ export default function FAQManager() {
             No FAQs found. Add your first FAQ to get started.
           </div>
         ) : (
-          faqs.map((faq, index) => (
-            <div
-              key={faq.id}
-              className={`bg-slate-800/50 border ${
-                faq.is_active ? 'border-slate-700' : 'border-red-500/30'
-              } rounded-lg p-6 space-y-4`}
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={faqs.map(faq => faq.id)}
+              strategy={verticalListSortingStrategy}
             >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center justify-center w-12 h-12 bg-blue-500/20 border border-blue-500/30 rounded-lg flex-shrink-0">
-                    <span className="text-xl font-bold text-blue-400">{index + 1}</span>
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <button
-                      onClick={() => handleMove(faq.id, 'up')}
-                      disabled={index === 0}
-                      className="p-1 hover:bg-slate-700 rounded disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                      title="Move up"
-                    >
-                      <MoveUp size={18} className="text-gray-400" />
-                    </button>
-                    <button
-                      onClick={() => handleMove(faq.id, 'down')}
-                      disabled={index === faqs.length - 1}
-                      className="p-1 hover:bg-slate-700 rounded disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                      title="Move down"
-                    >
-                      <MoveDown size={18} className="text-gray-400" />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  {editingId === faq.id ? (
-                    <>
-                      <button
-                        onClick={() => handleUpdate(faq.id)}
-                        className="p-2 bg-green-500 hover:bg-green-600 text-white rounded-lg"
-                      >
-                        <Save size={18} />
-                      </button>
-                      <button
-                        onClick={() => {
-                          setEditingId(null);
-                          loadFAQs();
-                        }}
-                        className="p-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg"
-                      >
-                        <X size={18} />
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        onClick={() => setEditingId(faq.id)}
-                        className="p-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg"
-                      >
-                        <Edit2 size={18} />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(faq.id)}
-                        className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-lg"
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {editingId === faq.id ? (
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">
-                      Question
-                    </label>
-                    <input
-                      type="text"
-                      value={faq.question}
-                      onChange={(e) => updateFAQ(faq.id, 'question', e.target.value)}
-                      className="w-full px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">
-                      Answer
-                    </label>
-                    <textarea
-                      value={faq.answer}
-                      onChange={(e) => updateFAQ(faq.id, 'answer', e.target.value)}
-                      rows={4}
-                      className="w-full px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id={`active_${faq.id}`}
-                      checked={faq.is_active}
-                      onChange={(e) => updateFAQ(faq.id, 'is_active', e.target.checked)}
-                      className="w-4 h-4 rounded bg-slate-700 border-slate-600"
-                    />
-                    <label htmlFor={`active_${faq.id}`} className="text-sm text-slate-300">
-                      Active (visible on website)
-                    </label>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <div className="flex items-start justify-between gap-4">
-                    <h4 className="text-lg font-semibold text-white">{faq.question}</h4>
-                    {!faq.is_active && (
-                      <span className="px-2 py-1 bg-red-500/20 text-red-400 text-xs rounded">
-                        Inactive
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-gray-400 leading-relaxed">{faq.answer}</p>
-                </div>
-              )}
-            </div>
-          ))
+              {faqs.map((faq, index) => (
+                <SortableFAQItem
+                  key={faq.id}
+                  faq={faq}
+                  index={index}
+                  editingId={editingId}
+                  onEdit={setEditingId}
+                  onUpdate={handleUpdate}
+                  onDelete={handleDelete}
+                  onCancelEdit={() => {
+                    setEditingId(null);
+                    loadFAQs();
+                  }}
+                  onFieldUpdate={updateFAQ}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
         )}
       </div>
     </div>
