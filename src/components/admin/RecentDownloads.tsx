@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Download, MapPin, Monitor, Calendar, RefreshCw, ChevronDown } from 'lucide-react';
+import { Download, MapPin, Monitor, Calendar, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface DownloadLog {
   id: string;
@@ -14,26 +14,17 @@ const ITEMS_PER_PAGE = 10;
 export default function RecentDownloads() {
   const [logs, setLogs] = useState<DownloadLog[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [hasMore, setHasMore] = useState(false);
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
-    loadRecentDownloads(true);
-  }, []);
+    loadRecentDownloads();
+  }, [page]);
 
-  const loadRecentDownloads = async (reset = false) => {
-    if (reset) {
-      setLoading(true);
-      setPage(1);
-    } else {
-      setLoadingMore(true);
-    }
-
+  const loadRecentDownloads = async () => {
+    setLoading(true);
     try {
-      const currentPage = reset ? 1 : page;
-      const from = (currentPage - 1) * ITEMS_PER_PAGE;
+      const from = (page - 1) * ITEMS_PER_PAGE;
       const to = from + ITEMS_PER_PAGE - 1;
 
       const { count } = await supabase
@@ -49,25 +40,55 @@ export default function RecentDownloads() {
       if (error) throw error;
 
       setTotalCount(count || 0);
-
-      if (reset) {
-        setLogs(data || []);
-      } else {
-        setLogs([...logs, ...(data || [])]);
-      }
-
-      setHasMore((data?.length || 0) === ITEMS_PER_PAGE && (from + ITEMS_PER_PAGE) < (count || 0));
+      setLogs(data || []);
     } catch (error) {
       console.error('Error loading recent downloads:', error);
     } finally {
       setLoading(false);
-      setLoadingMore(false);
     }
   };
 
-  const loadMore = () => {
-    setPage(page + 1);
-    loadRecentDownloads(false);
+  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
+
+  const goToPage = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setPage(newPage);
+    }
+  };
+
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = [];
+    const showPages = 5;
+
+    if (totalPages <= showPages + 2) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (page <= 3) {
+        for (let i = 1; i <= showPages; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(totalPages);
+      } else if (page >= totalPages - 2) {
+        pages.push(1);
+        pages.push('...');
+        for (let i = totalPages - showPages + 1; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        pages.push(1);
+        pages.push('...');
+        for (let i = page - 1; i <= page + 1; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(totalPages);
+      }
+    }
+
+    return pages;
   };
 
   const parseUserAgent = (ua: string | null) => {
@@ -126,12 +147,12 @@ export default function RecentDownloads() {
             <h3 className="text-xl font-bold text-white">Recent Downloads</h3>
           </div>
           <p className="text-sm text-slate-400 mt-1">
-            Showing {logs.length} of {totalCount} downloads
+            Page {page} of {totalPages} ({totalCount} total downloads)
           </p>
         </div>
 
         <button
-          onClick={() => loadRecentDownloads(true)}
+          onClick={loadRecentDownloads}
           className="p-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors"
           title="Refresh"
         >
@@ -204,24 +225,44 @@ export default function RecentDownloads() {
             </table>
           </div>
 
-          {hasMore && (
-            <div className="flex justify-center pt-4">
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 pt-4">
               <button
-                onClick={loadMore}
-                disabled={loadingMore}
-                className="flex items-center gap-2 px-6 py-3 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+                onClick={() => goToPage(page - 1)}
+                disabled={page === 1}
+                className="p-2 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50 text-white rounded-lg transition-colors"
+                title="Previous"
               >
-                {loadingMore ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                    Loading...
-                  </>
+                <ChevronLeft size={18} />
+              </button>
+
+              {getPageNumbers().map((pageNum, index) => (
+                pageNum === '...' ? (
+                  <span key={`dots-${index}`} className="px-3 py-2 text-slate-400">
+                    ...
+                  </span>
                 ) : (
-                  <>
-                    <span>Load More</span>
-                    <ChevronDown size={18} />
-                  </>
-                )}
+                  <button
+                    key={pageNum}
+                    onClick={() => goToPage(pageNum as number)}
+                    className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                      page === pageNum
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-slate-700 hover:bg-slate-600 text-slate-300'
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                )
+              ))}
+
+              <button
+                onClick={() => goToPage(page + 1)}
+                disabled={page === totalPages}
+                className="p-2 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50 text-white rounded-lg transition-colors"
+                title="Next"
+              >
+                <ChevronRight size={18} />
               </button>
             </div>
           )}
