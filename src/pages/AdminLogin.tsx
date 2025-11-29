@@ -25,6 +25,12 @@ export default function AdminLogin() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (!captchaToken) {
+      setError('Please complete the reCAPTCHA verification');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -142,7 +148,7 @@ export default function AdminLogin() {
               </div>
             </div>
 
-            {/* <div className="flex justify-center">
+            <div className="flex justify-center">
               <ReCAPTCHA
                 ref={recaptchaRef}
                 sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY || ''}
@@ -153,7 +159,7 @@ export default function AdminLogin() {
                 onExpired={() => setCaptchaToken(null)}
                 theme="dark"
               />
-            </div> */}
+            </div>
 
             {error && (
               <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
@@ -164,7 +170,7 @@ export default function AdminLogin() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !captchaToken}
               className="w-full py-3 bg-blue-500 hover:bg-blue-600 disabled:bg-slate-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
             >
               {loading ? 'Logging in...' : 'Login'}
