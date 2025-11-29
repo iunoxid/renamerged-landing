@@ -27,7 +27,7 @@ export default function ChangelogSection() {
       const { data, error } = await supabase
         .from('changelog_entries')
         .select('*')
-        .order('sort_order', { ascending: true });
+        .order('sort_order', { ascending: false });
 
       if (error || !data) {
         console.error('Error loading changelog:', error);
