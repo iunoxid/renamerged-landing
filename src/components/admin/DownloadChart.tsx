@@ -131,8 +131,8 @@ export default function DownloadChart() {
             <TrendingUp size={16} />
             <span>Average/Day</span>
           </div>
-          <p className="text-2xl font-bold text-white">
-            {(totalDownloads / selectedRange.days).toFixed(1)}
+          <p className="text-2xl font-bold text-white tabular-nums">
+            {totalDownloads > 0 ? (totalDownloads / selectedRange.days).toFixed(1) : '0.0'}
           </p>
         </div>
 
@@ -141,8 +141,8 @@ export default function DownloadChart() {
             <Calendar size={16} />
             <span>Peak Day</span>
           </div>
-          <p className="text-2xl font-bold text-white">
-            {Math.max(...data.map(d => d.count))}
+          <p className="text-2xl font-bold text-white tabular-nums">
+            {data.length > 0 ? Math.max(...data.map(d => d.count)) : 0}
           </p>
         </div>
       </div>

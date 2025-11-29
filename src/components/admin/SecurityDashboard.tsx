@@ -39,21 +39,30 @@ export default function SecurityDashboard() {
   const [securityConfig, setSecurityConfig] = useState<SecurityConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [savingConfig, setSavingConfig] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalAttempts, setTotalAttempts] = useState(0);
+  const attemptsPerPage = 20;
   const { showToast } = useToast();
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [currentPage]);
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const [attemptsRes, lockoutsRes, configRes] = await Promise.all([
+      const from = (currentPage - 1) * attemptsPerPage;
+      const to = from + attemptsPerPage - 1;
+
+      const [attemptsRes, countRes, lockoutsRes, configRes] = await Promise.all([
         supabase
           .from('login_attempts')
           .select('*')
           .order('attempted_at', { ascending: false })
-          .limit(50),
+          .range(from, to),
+        supabase
+          .from('login_attempts')
+          .select('*', { count: 'exact', head: true }),
         supabase
           .from('account_lockouts')
           .select('*')
@@ -66,6 +75,7 @@ export default function SecurityDashboard() {
       ]);
 
       if (attemptsRes.data) setLoginAttempts(attemptsRes.data);
+      if (countRes.count) setTotalAttempts(countRes.count);
       if (lockoutsRes.data) setLockedAccounts(lockoutsRes.data);
       if (configRes.data) setSecurityConfig(configRes.data);
     } catch (error) {
@@ -310,30 +320,67 @@ export default function SecurityDashboard() {
               </tr>
             </thead>
             <tbody>
-              {loginAttempts.slice(0, 20).map((attempt) => (
-                <tr key={attempt.id} className="border-b border-slate-700/50">
-                  <td className="py-3 px-4 text-sm text-white">{attempt.email}</td>
-                  <td className="py-3 px-4 text-sm text-slate-400 flex items-center gap-2">
-                    <Globe className="w-4 h-4" />
-                    {attempt.ip_address}
-                  </td>
-                  <td className="py-3 px-4 text-sm text-slate-400">
-                    {new Date(attempt.attempted_at).toLocaleString()}
-                  </td>
-                  <td className="py-3 px-4">
-                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${
-                      attempt.success
-                        ? 'bg-green-500/20 text-green-400'
-                        : 'bg-red-500/20 text-red-400'
-                    }`}>
-                      {attempt.success ? 'Success' : 'Failed'}
-                    </span>
+              {loginAttempts.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="py-8 text-center text-slate-400">
+                    No login attempts found
                   </td>
                 </tr>
-              ))}
+              ) : (
+                loginAttempts.map((attempt) => (
+                  <tr key={attempt.id} className="border-b border-slate-700/50">
+                    <td className="py-3 px-4 text-sm text-white">{attempt.email}</td>
+                    <td className="py-3 px-4 text-sm text-slate-400">
+                      <div className="flex items-center gap-2">
+                        <Globe className="w-4 h-4" />
+                        {attempt.ip_address}
+                      </div>
+                    </td>
+                    <td className="py-3 px-4 text-sm text-slate-400">
+                      {new Date(attempt.attempted_at).toLocaleString()}
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${
+                        attempt.success
+                          ? 'bg-green-500/20 text-green-400'
+                          : 'bg-red-500/20 text-red-400'
+                      }`}>
+                        {attempt.success ? 'Success' : 'Failed'}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
+
+        {totalAttempts > attemptsPerPage && (
+          <div className="mt-4 flex items-center justify-between">
+            <p className="text-sm text-slate-400">
+              Showing {((currentPage - 1) * attemptsPerPage) + 1} to {Math.min(currentPage * attemptsPerPage, totalAttempts)} of {totalAttempts} attempts
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="px-4 py-2 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:text-slate-600 text-white rounded-lg transition-colors"
+              >
+                Previous
+              </button>
+              <span className="px-4 py-2 bg-slate-800 text-white rounded-lg">
+                Page {currentPage} of {Math.ceil(totalAttempts / attemptsPerPage)}
+              </span>
+              <button
+                onClick={() => setCurrentPage(p => Math.min(Math.ceil(totalAttempts / attemptsPerPage), p + 1))}
+                disabled={currentPage >= Math.ceil(totalAttempts / attemptsPerPage)}
+                className="px-4 py-2 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:text-slate-600 text-white rounded-lg transition-colors"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
