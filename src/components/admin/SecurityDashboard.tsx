@@ -169,29 +169,6 @@ export default function SecurityDashboard() {
     }
   };
 
-  const handleClearAllLogs = async () => {
-    const message = `⚠️ WARNING: This will permanently delete ALL ${totalAttempts} login attempts, regardless of age. This action CANNOT be undone!\n\nAre you absolutely sure?`;
-    if (!confirm(message)) {
-      return;
-    }
-
-    setCleaningLogs(true);
-    try {
-      const { data, error } = await supabase.rpc('cleanup_all_login_attempts');
-
-      if (error) throw error;
-
-      const deletedCount = data as number;
-      showToast(`Successfully deleted all ${deletedCount} login attempt(s)`, 'success');
-      loadData();
-    } catch (error) {
-      console.error('Failed to clear all logs:', error);
-      showToast('Failed to clear all logs', 'error');
-    } finally {
-      setCleaningLogs(false);
-    }
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -378,24 +355,14 @@ export default function SecurityDashboard() {
       <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-white">Recent Login Attempts</h3>
-          <div className="flex gap-2">
-            <button
-              onClick={handleCleanupLogs}
-              disabled={cleaningLogs}
-              className="px-4 py-2 bg-orange-500/20 hover:bg-orange-500/30 disabled:bg-slate-700 text-orange-400 rounded-lg transition-colors flex items-center gap-2 text-sm"
-            >
-              <AlertTriangle className="w-4 h-4" />
-              {cleaningLogs ? 'Cleaning...' : `Cleanup Old (${securityConfig?.log_retention_days || 90}+ days)`}
-            </button>
-            <button
-              onClick={handleClearAllLogs}
-              disabled={cleaningLogs}
-              className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 disabled:bg-slate-700 text-red-400 rounded-lg transition-colors flex items-center gap-2 text-sm"
-            >
-              <AlertTriangle className="w-4 h-4" />
-              {cleaningLogs ? 'Clearing...' : 'Clear All Logs'}
-            </button>
-          </div>
+          <button
+            onClick={handleCleanupLogs}
+            disabled={cleaningLogs}
+            className="px-4 py-2 bg-orange-500/20 hover:bg-orange-500/30 disabled:bg-slate-700 text-orange-400 rounded-lg transition-colors flex items-center gap-2 text-sm"
+          >
+            <AlertTriangle className="w-4 h-4" />
+            {cleaningLogs ? 'Cleaning...' : `Cleanup Old (${securityConfig?.log_retention_days || 90}+ days)`}
+          </button>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
