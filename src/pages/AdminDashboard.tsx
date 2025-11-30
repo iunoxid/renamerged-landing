@@ -1,8 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { LogOut, Settings, FileText, Plus, Trash2, Save, AlertCircle, ChevronDown, Key } from 'lucide-react';
+import { LogOut, Settings, FileText, Plus, Trash2, Save, AlertCircle, ChevronDown, Key, Search, HelpCircle, BarChart3, Users, Download as DownloadIcon, Sliders, Shield, Monitor } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import SEOManager from '../components/admin/SEOManager';
+import FAQManager from '../components/admin/FAQManager';
+import DownloadChart from '../components/admin/DownloadChart';
+import VisitorAnalytics from '../components/admin/VisitorAnalytics';
+import RecentDownloads from '../components/admin/RecentDownloads';
+import AppConfigManager from '../components/admin/AppConfigManager';
+import SecurityDashboard from '../components/admin/SecurityDashboard';
+import SessionManager from '../components/admin/SessionManager';
+import { ToastProvider, useToast } from '../components/admin/ToastContainer';
 
 interface SiteConfig {
   id: string;
@@ -23,12 +32,12 @@ interface ChangelogEntry {
   sort_order: number;
 }
 
-export default function AdminDashboard() {
+function AdminDashboardContent() {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savingEntryId, setSavingEntryId] = useState<string | null>(null);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
@@ -42,7 +51,7 @@ export default function AdminDashboard() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordLoading, setPasswordLoading] = useState(false);
 
-  const [activeTab, setActiveTab] = useState<'config' | 'changelog' | 'password'>('config');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'config' | 'changelog' | 'password' | 'seo' | 'faq' | 'security' | 'sessions'>('dashboard');
 
   useEffect(() => {
     checkAuth();
@@ -80,7 +89,6 @@ export default function AdminDashboard() {
   const saveConfig = async () => {
     if (!config) return;
     setSaving(true);
-    setMessage(null);
 
     try {
       const { error } = await supabase
@@ -94,11 +102,9 @@ export default function AdminDashboard() {
         .eq('id', config.id);
 
       if (error) throw error;
-      setMessage({ type: 'success', text: 'Configuration saved successfully!' });
-      setTimeout(() => setMessage(null), 3000);
+      showToast('Configuration saved successfully!', 'success');
     } catch (err: any) {
-      setMessage({ type: 'error', text: err.message });
-      setTimeout(() => setMessage(null), 5000);
+      showToast(err.message, 'error');
     } finally {
       setSaving(false);
     }
@@ -193,13 +199,11 @@ export default function AdminDashboard() {
     if (!entry) return;
 
     if (!validateDate(entry.date)) {
-      setMessage({ type: 'error', text: 'Format tanggal harus DD/MM/YYYY' });
-      setTimeout(() => setMessage(null), 5000);
+      showToast('Format tanggal harus DD/MM/YYYY', 'error');
       return;
     }
 
     setSavingEntryId(entryId);
-    setMessage(null);
 
     try {
       const existingEntry = await supabase
@@ -234,12 +238,10 @@ export default function AdminDashboard() {
         if (error) throw error;
       }
 
-      setMessage({ type: 'success', text: 'Changelog saved successfully!' });
-      setTimeout(() => setMessage(null), 3000);
+      showToast('Changelog saved successfully!', 'success');
       await loadData();
     } catch (err: any) {
-      setMessage({ type: 'error', text: err.message });
-      setTimeout(() => setMessage(null), 5000);
+      showToast(err.message, 'error');
     } finally {
       setSavingEntryId(null);
     }
@@ -249,27 +251,22 @@ export default function AdminDashboard() {
     try {
       await supabase.from('changelog_entries').delete().eq('id', entryId);
       setChangelog(changelog.filter(entry => entry.id !== entryId));
-      setMessage({ type: 'success', text: 'Changelog deleted successfully!' });
-      setTimeout(() => setMessage(null), 3000);
+      showToast('Changelog deleted successfully!', 'success');
     } catch (err: any) {
-      setMessage({ type: 'error', text: err.message });
-      setTimeout(() => setMessage(null), 5000);
+      showToast(err.message, 'error');
     }
   };
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
-    setMessage(null);
 
     if (newPassword !== confirmPassword) {
-      setMessage({ type: 'error', text: 'New passwords do not match!' });
-      setTimeout(() => setMessage(null), 5000);
+      showToast('New passwords do not match!', 'error');
       return;
     }
 
     if (newPassword.length < 6) {
-      setMessage({ type: 'error', text: 'Password must be at least 6 characters!' });
-      setTimeout(() => setMessage(null), 5000);
+      showToast('Password must be at least 6 characters!', 'error');
       return;
     }
 
@@ -292,14 +289,12 @@ export default function AdminDashboard() {
 
       if (updateError) throw updateError;
 
-      setMessage({ type: 'success', text: 'Password updated successfully!' });
+      showToast('Password updated successfully!', 'success');
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-      setTimeout(() => setMessage(null), 3000);
     } catch (err: any) {
-      setMessage({ type: 'error', text: err.message || 'Failed to update password' });
-      setTimeout(() => setMessage(null), 5000);
+      showToast(err.message || 'Failed to update password', 'error');
     } finally {
       setPasswordLoading(false);
     }
@@ -332,21 +327,32 @@ export default function AdminDashboard() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700 rounded-2xl shadow-2xl overflow-hidden">
-          <div className="flex border-b border-slate-700">
+          <div className="flex border-b border-slate-700 overflow-x-auto">
+            <button
+              onClick={() => setActiveTab('dashboard')}
+              className={`flex items-center justify-center gap-2 px-4 py-4 font-semibold transition-colors whitespace-nowrap ${
+                activeTab === 'dashboard'
+                  ? 'bg-blue-500/10 text-blue-400 border-b-2 border-blue-500'
+                  : 'text-slate-400 hover:text-slate-300 hover:bg-slate-700/50'
+              }`}
+            >
+              <BarChart3 className="w-5 h-5" />
+              Dashboard
+            </button>
             <button
               onClick={() => setActiveTab('config')}
-              className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 font-semibold transition-colors ${
+              className={`flex items-center justify-center gap-2 px-4 py-4 font-semibold transition-colors whitespace-nowrap ${
                 activeTab === 'config'
                   ? 'bg-blue-500/10 text-blue-400 border-b-2 border-blue-500'
                   : 'text-slate-400 hover:text-slate-300 hover:bg-slate-700/50'
               }`}
             >
-              <Settings className="w-5 h-5" />
-              Site Configuration
+              <Sliders className="w-5 h-5" />
+              Config
             </button>
             <button
               onClick={() => setActiveTab('changelog')}
-              className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 font-semibold transition-colors ${
+              className={`flex items-center justify-center gap-2 px-4 py-4 font-semibold transition-colors whitespace-nowrap ${
                 activeTab === 'changelog'
                   ? 'bg-blue-500/10 text-blue-400 border-b-2 border-blue-500'
                   : 'text-slate-400 hover:text-slate-300 hover:bg-slate-700/50'
@@ -356,39 +362,94 @@ export default function AdminDashboard() {
               Changelog
             </button>
             <button
+              onClick={() => setActiveTab('seo')}
+              className={`flex items-center justify-center gap-2 px-4 py-4 font-semibold transition-colors whitespace-nowrap ${
+                activeTab === 'seo'
+                  ? 'bg-blue-500/10 text-blue-400 border-b-2 border-blue-500'
+                  : 'text-slate-400 hover:text-slate-300 hover:bg-slate-700/50'
+              }`}
+            >
+              <Search className="w-5 h-5" />
+              SEO
+            </button>
+            <button
+              onClick={() => setActiveTab('faq')}
+              className={`flex items-center justify-center gap-2 px-4 py-4 font-semibold transition-colors whitespace-nowrap ${
+                activeTab === 'faq'
+                  ? 'bg-blue-500/10 text-blue-400 border-b-2 border-blue-500'
+                  : 'text-slate-400 hover:text-slate-300 hover:bg-slate-700/50'
+              }`}
+            >
+              <HelpCircle className="w-5 h-5" />
+              FAQ
+            </button>
+            <button
               onClick={() => setActiveTab('password')}
-              className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 font-semibold transition-colors ${
+              className={`flex items-center justify-center gap-2 px-4 py-4 font-semibold transition-colors whitespace-nowrap ${
                 activeTab === 'password'
                   ? 'bg-blue-500/10 text-blue-400 border-b-2 border-blue-500'
                   : 'text-slate-400 hover:text-slate-300 hover:bg-slate-700/50'
               }`}
             >
               <Key className="w-5 h-5" />
-              Change Password
+              Password
+            </button>
+            <button
+              onClick={() => setActiveTab('security')}
+              className={`flex items-center justify-center gap-2 px-4 py-4 font-semibold transition-colors whitespace-nowrap ${
+                activeTab === 'security'
+                  ? 'bg-blue-500/10 text-blue-400 border-b-2 border-blue-500'
+                  : 'text-slate-400 hover:text-slate-300 hover:bg-slate-700/50'
+              }`}
+            >
+              <Shield className="w-5 h-5" />
+              Security
+            </button>
+            <button
+              onClick={() => setActiveTab('sessions')}
+              className={`flex items-center justify-center gap-2 px-4 py-4 font-semibold transition-colors whitespace-nowrap ${
+                activeTab === 'sessions'
+                  ? 'bg-blue-500/10 text-blue-400 border-b-2 border-blue-500'
+                  : 'text-slate-400 hover:text-slate-300 hover:bg-slate-700/50'
+              }`}
+            >
+              <Monitor className="w-5 h-5" />
+              Sessions
             </button>
           </div>
 
           <div className="p-6">
-            <AnimatePresence>
-              {message && (
-                <motion.div
-                  initial={{ opacity: 0, y: -20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
-                  className={`mb-6 flex items-center gap-2 p-4 rounded-lg ${
-                    message.type === 'success'
-                      ? 'bg-green-500/10 border border-green-500/20 text-green-400'
-                      : 'bg-red-500/10 border border-red-500/20 text-red-400'
-                  }`}
-                >
-                  <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                  <p className="text-sm">{message.text}</p>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {activeTab === 'dashboard' && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4 }}
+                className="space-y-6"
+              >
+                <div className="mb-8">
+                  <h2 className="text-2xl font-bold text-white mb-2">Analytics Dashboard</h2>
+                  <p className="text-slate-400">Monitor your application's performance and user activity</p>
+                </div>
 
-            {activeTab === 'config' && config && (
+                <VisitorAnalytics />
+
+                <DownloadChart />
+
+                <RecentDownloads />
+              </motion.div>
+            )}
+
+            {activeTab === 'config' && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4 }}
+              >
+                <AppConfigManager showToast={showToast} />
+              </motion.div>
+            )}
+
+            {activeTab === 'config' && config && false && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -761,6 +822,26 @@ export default function AdminDashboard() {
               </motion.div>
             )}
 
+            {activeTab === 'seo' && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4 }}
+              >
+                <SEOManager showToast={showToast} />
+              </motion.div>
+            )}
+
+            {activeTab === 'faq' && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4 }}
+              >
+                <FAQManager showToast={showToast} />
+              </motion.div>
+            )}
+
             {activeTab === 'password' && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -840,9 +921,37 @@ export default function AdminDashboard() {
                 </form>
               </motion.div>
             )}
+
+            {activeTab === 'security' && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4 }}
+              >
+                <SecurityDashboard />
+              </motion.div>
+            )}
+
+            {activeTab === 'sessions' && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4 }}
+              >
+                <SessionManager />
+              </motion.div>
+            )}
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AdminDashboard() {
+  return (
+    <ToastProvider>
+      <AdminDashboardContent />
+    </ToastProvider>
   );
 }

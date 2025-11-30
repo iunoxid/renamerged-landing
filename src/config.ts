@@ -4,6 +4,7 @@ interface SiteConfig {
   github_repo_url: string;
   download_url: string;
   version: string;
+  file_size: string;
 }
 
 let cachedConfig: SiteConfig | null = null;
@@ -14,7 +15,7 @@ export async function getAppConfig() {
       downloadUrl: cachedConfig.download_url,
       appVersion: cachedConfig.version,
       githubUrl: cachedConfig.github_repo_url,
-      fileSize: '~33MB',
+      fileSize: cachedConfig.file_size,
       virusTotalUrl: 'https://www.virustotal.com/gui/file/659ee926078262e08fedc9c6744ba37ebf03580bf203b332609f094d6fc0d162/detection',
     };
   }
@@ -39,7 +40,7 @@ export async function getAppConfig() {
     downloadUrl: data.download_url,
     appVersion: data.version,
     githubUrl: data.github_repo_url,
-    fileSize: '~33MB',
+    fileSize: data.file_size || '~33MB',
     virusTotalUrl: 'https://www.virustotal.com/gui/file/659ee926078262e08fedc9c6744ba37ebf03580bf203b332609f094d6fc0d162/detection',
   };
 }
