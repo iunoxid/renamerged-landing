@@ -411,7 +411,7 @@ sudo systemctl restart nginx
 
 ## License
 
-All rights reserved. Renamerged © 2025
+All rights reserved. Renamerged © 2026
 
 ## Support
 

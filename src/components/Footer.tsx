@@ -132,7 +132,7 @@ export default function Footer() {
         <div className="border-t border-slate-800/50 pt-6">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-gray-600 text-xs text-center md:text-left">
-              © 2025 Renamerged.id. All rights reserved.
+              © 2026 Renamerged.id. All rights reserved.
             </p>
             <p className="text-gray-600 text-xs text-center md:text-right max-w-2xl">
               Disclaimer: Software independen, tidak berafiliasi dengan DJP.
