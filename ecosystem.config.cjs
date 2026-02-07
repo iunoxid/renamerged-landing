@@ -3,7 +3,7 @@ module.exports = {
     name: 'renamerged',
     script: 'npm',
     args: 'start',
-    cwd: './',
+    cwd: './frontend',
     instances: 1,
     autorestart: true,
     watch: false,

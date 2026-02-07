@@ -10,6 +10,10 @@ node_modules
 dist
 dist-ssr
 *.local
+frontend/node_modules
+backend/node_modules
+frontend/dist
+frontend/dist-ssr
 
 .vscode/*
 !.vscode/extensions.json
@@ -21,3 +25,9 @@ dist-ssr
 *.sln
 *.sw?
 .env
+frontend/.env
+backend/.env
+backend/supabase/.temp
+backend/supabase/.branches
+backend/supabase/.config
+backend/supabase/.env
