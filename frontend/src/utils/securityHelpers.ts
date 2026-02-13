@@ -222,25 +222,50 @@ export function validatePasswordStrength(password: string): {
   };
 }
 
-export async function verifyRecaptcha(token: string): Promise<boolean> {
+export async function verifyRecaptcha(token: string | null): Promise<boolean> {
+  if (!token) {
+    throw new Error('reCAPTCHA token is missing. Please verify again.');
+  }
+
   try {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
     const response = await fetch(
       `${supabaseUrl}/functions/v1/verify-recaptcha`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          apikey: supabaseAnonKey,
+          Authorization: `Bearer ${supabaseAnonKey}`,
         },
         body: JSON.stringify({ token }),
       }
     );
 
-    if (!response.ok) return false;
-    const data = await response.json();
-    return !!data.success;
+    let data: any = null;
+    try {
+      data = await response.json();
+    } catch {
+      // ignore JSON parse failures and handle by status code below
+    }
+
+    if (!response.ok) {
+      const message = data?.error || `HTTP ${response.status}`;
+      throw new Error(`reCAPTCHA endpoint error: ${message}`);
+    }
+
+    if (!data?.success) {
+      const errorCodes = Array.isArray(data?.['error-codes'])
+        ? data['error-codes'].join(', ')
+        : 'unknown';
+      throw new Error(`reCAPTCHA verification failed (${errorCodes}).`);
+    }
+
+    return true;
   } catch (error) {
     console.error('Failed to verify reCAPTCHA:', error);
-    return false;
+    throw error;
   }
 }

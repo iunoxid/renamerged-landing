@@ -36,10 +36,7 @@ export default function AdminLogin() {
 
     try {
       if (enableRecaptcha) {
-        const captchaValid = await verifyRecaptcha(captchaToken);
-        if (!captchaValid) {
-          throw new Error('reCAPTCHA verification failed. Please try again.');
-        }
+        await verifyRecaptcha(captchaToken);
       }
 
       const clientInfo = await getClientInfo();
