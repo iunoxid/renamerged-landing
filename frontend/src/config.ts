@@ -5,9 +5,12 @@ interface SiteConfig {
   download_url: string;
   version: string;
   file_size: string;
+  virus_total_url?: string;
 }
 
 let cachedConfig: SiteConfig | null = null;
+const DEFAULT_VIRUSTOTAL_URL =
+  'https://www.virustotal.com/gui/file/659ee926078262e08fedc9c6744ba37ebf03580bf203b332609f094d6fc0d162/detection';
 
 export async function getAppConfig() {
   if (cachedConfig) {
@@ -16,7 +19,7 @@ export async function getAppConfig() {
       appVersion: cachedConfig.version,
       githubUrl: cachedConfig.github_repo_url,
       fileSize: cachedConfig.file_size,
-      virusTotalUrl: 'https://www.virustotal.com/gui/file/659ee926078262e08fedc9c6744ba37ebf03580bf203b332609f094d6fc0d162/detection',
+      virusTotalUrl: cachedConfig.virus_total_url || DEFAULT_VIRUSTOTAL_URL,
     };
   }
 
@@ -31,7 +34,7 @@ export async function getAppConfig() {
       appVersion: '3.0.1',
       githubUrl: 'https://github.com/iunoxid/renamergedV3',
       fileSize: '~33MB',
-      virusTotalUrl: 'https://www.virustotal.com/gui/file/659ee926078262e08fedc9c6744ba37ebf03580bf203b332609f094d6fc0d162/detection',
+      virusTotalUrl: DEFAULT_VIRUSTOTAL_URL,
     };
   }
 
@@ -41,7 +44,7 @@ export async function getAppConfig() {
     appVersion: data.version,
     githubUrl: data.github_repo_url,
     fileSize: data.file_size || '~33MB',
-    virusTotalUrl: 'https://www.virustotal.com/gui/file/659ee926078262e08fedc9c6744ba37ebf03580bf203b332609f094d6fc0d162/detection',
+    virusTotalUrl: data.virus_total_url || DEFAULT_VIRUSTOTAL_URL,
   };
 }
 
@@ -50,5 +53,5 @@ export const APP_CONFIG = {
   appVersion: '3.0.1',
   githubUrl: 'https://github.com/iunoxid/renamergedV3',
   fileSize: '~33MB',
-  virusTotalUrl: 'https://www.virustotal.com/gui/file/659ee926078262e08fedc9c6744ba37ebf03580bf203b332609f094d6fc0d162/detection',
+  virusTotalUrl: DEFAULT_VIRUSTOTAL_URL,
 };

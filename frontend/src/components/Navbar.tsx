@@ -31,6 +31,10 @@ export default function Navbar({ onDownloadClick }: NavbarProps) {
             <img
               src="/assets/logo/web-app-manifest-192x192.png"
               alt="Renamerged Logo"
+              width={192}
+              height={192}
+              loading="lazy"
+              decoding="async"
               className="w-8 h-8 object-contain"
             />
             <div className="flex items-center gap-2">

@@ -1,7 +1,9 @@
-import { Shield, ShieldCheck, Lock, FileCheck } from 'lucide-react';
+import { Shield, ShieldCheck, Lock } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useAppConfig } from '../hooks/useAppConfig';
 
 export default function SecurityTransparencySection() {
+  const { config } = useAppConfig();
 
   return (
     <section id="keamanan" className="relative py-24 px-4">
@@ -69,7 +71,7 @@ export default function SecurityTransparencySection() {
 
               <div>
                 <a
-                  href="https://www.virustotal.com/gui/file/659ee926078262e08fedc9c6744ba37ebf03580bf203b332609f094d6fc0d162/detection"
+                  href={config.virusTotalUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-500 px-6 py-3 rounded-lg font-semibold text-white transition-colors mb-4"

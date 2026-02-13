@@ -31,3 +31,4 @@ backend/supabase/.temp
 backend/supabase/.branches
 backend/supabase/.config
 backend/supabase/.env
+backend/supabase/migrations/20260213_add_virus_total_url_to_site_config.sql

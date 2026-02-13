@@ -60,6 +60,10 @@ export default function DonationSection() {
               <img
                 src="/qris.png"
                 alt="QRIS Code untuk Donasi"
+                width={409}
+                height={410}
+                loading="lazy"
+                decoding="async"
                 className="w-full h-auto rounded-lg"
               />
               <p className="text-gray-600 text-sm mt-4">Scan dengan aplikasi mobile banking atau e-wallet Anda</p>

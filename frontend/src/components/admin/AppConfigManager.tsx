@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Save, Link as LinkIcon, Package, Github, HardDrive, Settings, AlertCircle } from 'lucide-react';
+import { Save, Link as LinkIcon, Package, Github, HardDrive, Settings, AlertCircle, ShieldCheck } from 'lucide-react';
 import { ToastType } from './ToastContainer';
+import { APP_CONFIG } from '../../config';
 
 interface SiteConfig {
   id: string;
@@ -9,6 +10,7 @@ interface SiteConfig {
   download_url: string;
   version: string;
   file_size: string;
+  virus_total_url: string;
   updated_at: string;
 }
 
@@ -33,7 +35,10 @@ export default function AppConfigManager({ showToast }: AppConfigManagerProps) {
         .single();
 
       if (error) throw error;
-      setConfig(data);
+      setConfig({
+        ...data,
+        virus_total_url: data.virus_total_url || APP_CONFIG.virusTotalUrl,
+      });
     } catch (error) {
       console.error('Error loading config:', error);
       showToast('Failed to load configuration', 'error');
@@ -45,7 +50,7 @@ export default function AppConfigManager({ showToast }: AppConfigManagerProps) {
   const handleSave = async () => {
     if (!config) return;
 
-    if (!config.github_repo_url || !config.download_url || !config.version || !config.file_size) {
+    if (!config.github_repo_url || !config.download_url || !config.version || !config.file_size || !config.virus_total_url) {
       showToast('All fields are required', 'error');
       return;
     }
@@ -59,6 +64,7 @@ export default function AppConfigManager({ showToast }: AppConfigManagerProps) {
           download_url: config.download_url,
           version: config.version,
           file_size: config.file_size,
+          virus_total_url: config.virus_total_url,
           updated_at: new Date().toISOString(),
         })
         .eq('id', config.id);
@@ -182,6 +188,23 @@ export default function AppConfigManager({ showToast }: AppConfigManagerProps) {
           </div>
         </div>
 
+        <div className="space-y-2">
+          <label className="flex items-center gap-2 text-sm font-medium text-slate-300">
+            <ShieldCheck size={16} />
+            VirusTotal Report URL
+          </label>
+          <input
+            type="url"
+            value={config.virus_total_url}
+            onChange={(e) => updateField('virus_total_url', e.target.value)}
+            placeholder="https://www.virustotal.com/gui/file/..."
+            className="w-full px-4 py-3 bg-slate-900/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+          />
+          <p className="text-xs text-slate-500">
+            Public VirusTotal scan result link shown on landing page
+          </p>
+        </div>
+
         <div className="pt-4 border-t border-slate-700">
           <div className="flex items-center justify-between">
             <div className="text-sm text-slate-400">
@@ -218,6 +241,7 @@ export default function AppConfigManager({ showToast }: AppConfigManagerProps) {
               <li>Download URL should be a direct link to the installer file</li>
               <li>Version format: MAJOR.MINOR.PATCH (e.g., 1.0.0)</li>
               <li>File size format: use ~ for approximate (e.g., ~33MB, 45.2MB)</li>
+              <li>VirusTotal URL should be the public report page link</li>
               <li>Changes will be reflected on the landing page immediately</li>
             </ul>
           </div>

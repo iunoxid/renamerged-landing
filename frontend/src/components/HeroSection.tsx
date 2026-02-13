@@ -151,10 +151,15 @@ export default function HeroSection({ onDownloadClick }: HeroSectionProps) {
               <span className="text-gray-400 text-xs ml-2">Renamerged.exe</span>
             </div>
 
-            <div className="relative rounded-lg overflow-hidden border-2 border-purple-500/20">
+            <div className="relative rounded-lg overflow-hidden border-2 border-purple-500/20 hero-image-shell">
               <img
                 src="/renamerged-screenshot.png"
                 alt="Renamerged Application Interface"
+                width={860}
+                height={611}
+                fetchPriority="high"
+                loading="eager"
+                decoding="async"
                 className="w-full h-auto"
               />
             </div>

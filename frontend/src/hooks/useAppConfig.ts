@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getAppConfig } from '../config';
+import { getAppConfig, APP_CONFIG } from '../config';
 
 interface AppConfig {
   downloadUrl: string;
@@ -11,11 +11,11 @@ interface AppConfig {
 
 export function useAppConfig() {
   const [config, setConfig] = useState<AppConfig>({
-    downloadUrl: 'https://drive.google.com/file/d/1CU0M7hJQTtAfObYCIA5WI0EdkRwlpUl-/view?usp=sharing',
-    appVersion: '3.0.1',
-    githubUrl: 'https://github.com/iunoxid/renamergedV3',
-    fileSize: '~33MB',
-    virusTotalUrl: 'https://www.virustotal.com/gui/file/659ee926078262e08fedc9c6744ba37ebf03580bf203b332609f094d6fc0d162/detection',
+    downloadUrl: APP_CONFIG.downloadUrl,
+    appVersion: APP_CONFIG.appVersion,
+    githubUrl: APP_CONFIG.githubUrl,
+    fileSize: APP_CONFIG.fileSize,
+    virusTotalUrl: APP_CONFIG.virusTotalUrl,
   });
   const [loading, setLoading] = useState(true);
 
