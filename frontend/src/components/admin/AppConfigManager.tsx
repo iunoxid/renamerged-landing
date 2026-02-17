@@ -138,7 +138,7 @@ export default function AppConfigManager({ showToast }: AppConfigManagerProps) {
         <div className="space-y-2">
           <label className="flex items-center gap-2 text-sm font-medium text-slate-300">
             <LinkIcon size={16} />
-            Download URL
+            Download URL (Fallback)
           </label>
           <input
             type="url"
@@ -148,7 +148,7 @@ export default function AppConfigManager({ showToast }: AppConfigManagerProps) {
             className="w-full px-4 py-3 bg-slate-900/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
           />
           <p className="text-xs text-slate-500">
-            Direct download link for your application installer
+            Digunakan sebagai fallback jika daftar pada tab Downloads kosong/error
           </p>
         </div>
 
@@ -238,7 +238,7 @@ export default function AppConfigManager({ showToast }: AppConfigManagerProps) {
             <p className="text-sm font-medium text-blue-400">Configuration Tips</p>
             <ul className="text-xs text-slate-400 space-y-1 list-disc list-inside">
               <li>GitHub URL should point to your repository homepage</li>
-              <li>Download URL should be a direct link to the installer file</li>
+              <li>Download URL dipakai sebagai fallback default dari tab Downloads</li>
               <li>Version format: MAJOR.MINOR.PATCH (e.g., 1.0.0)</li>
               <li>File size format: use ~ for approximate (e.g., ~33MB, 45.2MB)</li>
               <li>VirusTotal URL should be the public report page link</li>

@@ -55,6 +55,9 @@ Di Supabase dashboard:
 1. Buka **Project Settings** → **Functions**
 2. Tambahkan secret berikut:
    - `RECAPTCHA_SECRET_KEY` = Secret Key reCAPTCHA (step 1)
+   - `DOWNLOAD_GATE_SECRET` = random string panjang (contoh output openssl rand -base64 32)
+   - `SUPABASE_SERVICE_ROLE_KEY` = service_role key project Supabase
+   - `ALLOW_RECAPTCHA_BYPASS` = `true` (opsional, hanya untuk local/dev testing tanpa captcha)
 
 ## 6. Jalankan Database Migration
 
@@ -102,6 +105,16 @@ ON CONFLICT DO NOTHING;
 
 4. Klik **Run** (atau Ctrl+Enter)
 
+### Tambahan untuk halaman daftar download (wajib untuk fitur Download List)
+
+Jalankan SQL migration berikut agar daftar versi download bisa dikelola dari Admin Dashboard:
+
+- File: `backend/supabase/migrations/20260218_create_download_versions.sql`
+
+Migration ini akan membuat tabel `download_versions` + policy RLS untuk:
+- read public hanya untuk entry aktif
+- create/update/delete khusus admin
+
 ## 7. Deploy Edge Functions
 
 ### Cara 1: Via Dashboard (Recommended)
@@ -118,6 +131,9 @@ ON CONFLICT DO NOTHING;
    - **Function name**: `verify-recaptcha`
      - **Verify JWT**: OFF (public verify)
      - Code: `backend/supabase/functions/verify-recaptcha/index.ts`
+   - **Function name**: `download-catalog`
+     - **Verify JWT**: OFF (gate token handled internally)
+     - Code: `backend/supabase/functions/download-catalog/index.ts`
 4. Klik **Deploy function**
 
 ### Cara 2: Via Supabase CLI
@@ -135,6 +151,7 @@ supabase link --project-ref xxxxx
 supabase functions deploy track-download
 supabase functions deploy send-telegram-notification
 supabase functions deploy verify-recaptcha
+supabase functions deploy download-catalog
 ```
 
 ## 8. Test Setup

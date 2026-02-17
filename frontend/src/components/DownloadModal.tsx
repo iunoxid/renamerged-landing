@@ -1,6 +1,7 @@
 import { X, Download, CheckCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { useAppConfig } from '../hooks/useAppConfig';
 
@@ -11,31 +12,52 @@ interface DownloadModalProps {
 
 export default function DownloadModal({ isOpen, onClose }: DownloadModalProps) {
   const { config } = useAppConfig();
+  const navigate = useNavigate();
   const [isAgreed, setIsAgreed] = useState(false);
   const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+  const [isIssuingGate, setIsIssuingGate] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const enableRecaptcha = (import.meta.env.VITE_ENABLE_RECAPTCHA ?? 'true') !== 'false';
   const recaptchaRef = useRef<ReCAPTCHA>(null);
 
   const handleDownload = async () => {
     if (isAgreed && (!enableRecaptcha || recaptchaToken)) {
+      setIsIssuingGate(true);
+      setError(null);
       try {
-        const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/track-download`;
-        await fetch(apiUrl, {
+        const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/download-catalog`;
+        const response = await fetch(apiUrl, {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
             'Content-Type': 'application/json',
           },
+          body: JSON.stringify({ captchaToken: recaptchaToken }),
         });
-      } catch (error) {
-        console.error('Failed to track download:', error);
-      }
 
-      window.open(config.downloadUrl, '_blank');
-      onClose();
-      setIsAgreed(false);
-      setRecaptchaToken(null);
-      recaptchaRef.current?.reset();
+        let data: any = null;
+        try {
+          data = await response.json();
+        } catch {
+          // ignore parse error
+        }
+
+        if (!response.ok || !data?.gateToken) {
+          throw new Error(data?.error || 'Gagal memverifikasi akses download');
+        }
+
+        const params = new URLSearchParams({ gate: data.gateToken });
+        navigate(`/download?${params.toString()}`);
+        onClose();
+        setIsAgreed(false);
+        setRecaptchaToken(null);
+        recaptchaRef.current?.reset();
+      } catch (err: any) {
+        setError(err.message || 'Gagal membuka daftar download');
+      } finally {
+        setIsIssuingGate(false);
+      }
     }
   };
 
@@ -110,18 +132,27 @@ export default function DownloadModal({ isOpen, onClose }: DownloadModalProps) {
                     <ReCAPTCHA
                       ref={recaptchaRef}
                       sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
-                      onChange={handleRecaptchaChange}
+                      onChange={(token) => {
+                        setError(null);
+                        handleRecaptchaChange(token);
+                      }}
                       theme="dark"
                     />
                   </div>
                 )}
               </div>
 
+              {error && (
+                <div className="mb-4 text-sm text-red-300 bg-red-500/10 border border-red-500/20 rounded-lg p-3">
+                  {error}
+                </div>
+              )}
+
               <motion.button
                 whileHover={isDownloadEnabled ? { scale: 1.02 } : {}}
                 whileTap={isDownloadEnabled ? { scale: 0.98 } : {}}
                 onClick={handleDownload}
-                disabled={!isDownloadEnabled}
+                disabled={!isDownloadEnabled || isIssuingGate}
                 className={`w-full flex items-center justify-center gap-3 py-4 rounded-xl font-semibold text-base transition-all ${
                   isDownloadEnabled
                     ? 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white shadow-lg shadow-purple-500/50'
@@ -129,7 +160,11 @@ export default function DownloadModal({ isOpen, onClose }: DownloadModalProps) {
                 }`}
               >
                 <Download size={20} />
-                {isDownloadEnabled ? 'Download Sekarang' : 'Selesaikan verifikasi untuk download'}
+                {isIssuingGate
+                  ? 'Memverifikasi akses...'
+                  : isDownloadEnabled
+                    ? 'Lanjut ke daftar download'
+                    : 'Selesaikan verifikasi untuk download'}
               </motion.button>
 
               <p className="text-gray-500 text-xs text-center mt-4">
